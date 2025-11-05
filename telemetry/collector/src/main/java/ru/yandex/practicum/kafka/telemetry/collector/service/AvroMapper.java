@@ -16,9 +16,6 @@ public class AvroMapper {
                         .setHubId(light.getHubId())
                         .setTimestamp(light.getTimestamp().toEpochMilli())
                         .setPayload(LightSensorAvro.newBuilder()
-                                .setId(light.getId())
-                                .setHubId(light.getHubId())
-                                .setTimestamp(light.getTimestamp().toEpochMilli())
                                 .setLinkQuality(light.getLinkQuality())
                                 .setLuminosity(light.getLuminosity())
                                 .build())
@@ -31,9 +28,6 @@ public class AvroMapper {
                         .setHubId(temp.getHubId())
                         .setTimestamp(temp.getTimestamp().toEpochMilli())
                         .setPayload(TemperatureSensorAvro.newBuilder()
-                                .setId(temp.getId())
-                                .setHubId(temp.getHubId())
-                                .setTimestamp(temp.getTimestamp().toEpochMilli())
                                 .setTemperatureC(temp.getTemperatureC())
                                 .setTemperatureF(temp.getTemperatureF())
                                 .build())
@@ -46,9 +40,6 @@ public class AvroMapper {
                         .setHubId(motion.getHubId())
                         .setTimestamp(motion.getTimestamp().toEpochMilli())
                         .setPayload(MotionSensorAvro.newBuilder()
-                                .setId(motion.getId())
-                                .setHubId(motion.getHubId())
-                                .setTimestamp(motion.getTimestamp().toEpochMilli())
                                 .setLinkQuality(motion.getLinkQuality())
                                 .setMotion(motion.isMotion())
                                 .setVoltage(motion.getVoltage())
@@ -62,9 +53,6 @@ public class AvroMapper {
                         .setHubId(climate.getHubId())
                         .setTimestamp(climate.getTimestamp().toEpochMilli())
                         .setPayload(ClimateSensorAvro.newBuilder()
-                                .setId(climate.getId())
-                                .setHubId(climate.getHubId())
-                                .setTimestamp(climate.getTimestamp().toEpochMilli())
                                 .setTemperatureC(climate.getTemperatureC())
                                 .setHumidity(climate.getHumidity())
                                 .setCo2Level(climate.getCo2Level())
@@ -78,15 +66,13 @@ public class AvroMapper {
                         .setHubId(sw.getHubId())
                         .setTimestamp(sw.getTimestamp().toEpochMilli())
                         .setPayload(SwitchSensorAvro.newBuilder()
-                                .setId(sw.getId())
-                                .setHubId(sw.getHubId())
-                                .setTimestamp(sw.getTimestamp().toEpochMilli())
                                 .setState(sw.isState())
                                 .build())
                         .build();
             }
         };
     }
+
 
     public static SpecificRecordBase toAvro(HubEvent event) {
         HubEventAvro.Builder builder = HubEventAvro.newBuilder()
@@ -138,7 +124,7 @@ public class AvroMapper {
                         .setName(scenarioRemoved.getName())
                         .build());
             }
-            default -> throw new IllegalArgumentException("Unsupported type: " + event.getType());
+            default -> throw new IllegalArgumentException("Unsupported HubEvent type: " + event.getType());
         }
 
         return builder.build();
