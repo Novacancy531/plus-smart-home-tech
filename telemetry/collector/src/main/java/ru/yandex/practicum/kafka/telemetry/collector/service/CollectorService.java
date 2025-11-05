@@ -10,7 +10,8 @@ import ru.yandex.practicum.kafka.telemetry.collector.kafka.AvroSerializer;
 import ru.yandex.practicum.kafka.telemetry.collector.model.hub.HubEvent;
 import ru.yandex.practicum.kafka.telemetry.collector.model.sensor.SensorEvent;
 
-import static ru.yandex.practicum.kafka.telemetry.collector.service.AvroMapper.toAvro;
+import static ru.yandex.practicum.kafka.telemetry.collector.service.HubAvroMapper.hubToAvro;
+import static ru.yandex.practicum.kafka.telemetry.collector.service.SensorAvroMapper.sensorToAvro;
 
 @Service
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class CollectorService {
     public static final String HUB_TOPIC = "telemetry.hubs.v1";
 
     public void sendSensorEvent(SensorEvent event) {
-        SpecificRecordBase avroRecord = toAvro(event);
+        SpecificRecordBase avroRecord = sensorToAvro(event);
         byte[] data = AvroSerializer.serialize(avroRecord);
 
         log.info("Sending sensor event {}", data);
@@ -31,7 +32,7 @@ public class CollectorService {
     }
 
     public void sendHubEvent(HubEvent event) {
-        SpecificRecordBase avroRecord = toAvro(event);
+        SpecificRecordBase avroRecord = hubToAvro(event);
         byte[] data = AvroSerializer.serialize(avroRecord);
 
         log.info("Sending hub event {}", data);
