@@ -3,49 +3,55 @@ protocol SensorEventProtocol {
 
 	record LightSensorAvro {
 		string id;
-		string hubId;
+		string hub_id;
 		long timestamp;
-		int linkQuality;
+		int link_quality;
 		int luminosity;
 	}
 
 	record TemperatureSensorAvro {
 		string id;
-		string hubId;
+		string hub_id;
 		long timestamp;
-		int temperatureC;
-		int temperatureF;
+		int temperature_c;
+		int temperature_f;
 	}
 
 	record MotionSensorAvro {
 		string id;
-		string hubId;
+		string hub_id;
 		long timestamp;
-		int linkQuality;
+		int link_quality;
 		boolean motion;
 		int voltage;
 	}
 
 	record SwitchSensorAvro {
 		string id;
-		string hubId;
+		string hub_id;
 		long timestamp;
 		boolean state;
 	}
 
 	record ClimateSensorAvro {
 		string id;
-		string hubId;
+		string hub_id;
 		long timestamp;
-		int temperatureC;
+		int temperature_c;
 		int humidity;
-		int co2Level;
+		int co2_level;
 	}
 
 	record SensorEventAvro {
 		string id;
-		string hubId;
+		string hub_id;
 		long timestamp;
-		union{ClimateSensorAvro, LightSensorAvro, MotionSensorAvro, SwitchSensorAvro, TemperatureSensorAvro} payload;
+		union {
+			ClimateSensorAvro,
+			LightSensorAvro,
+			MotionSensorAvro,
+			SwitchSensorAvro,
+			TemperatureSensorAvro
+		} payload;
 	}
 }
