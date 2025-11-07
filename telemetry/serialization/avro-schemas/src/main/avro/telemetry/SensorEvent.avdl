@@ -46,6 +46,6 @@ protocol SensorEventProtocol {
 		string id;
 		string hubId;
 		long timestamp;
-		union { LightSensorAvro, TemperatureSensorAvro, MotionSensorAvro, SwitchSensorAvro, ClimateSensorAvro } payload;
+		union{ClimateSensorAvro, LightSensorAvro, MotionSensorAvro, SwitchSensorAvro, TemperatureSensorAvro} payload;
 	}
 }
