@@ -15,20 +15,20 @@ public class HubAvroMapper {
 
         switch (event.getType()) {
             case DEVICE_ADDED -> {
-                DeviceAddedEvent added = (DeviceAddedEvent) event.getPayload();
+                DeviceAddedEvent added = (DeviceAddedEvent) event;
                 builder.setPayload(DeviceAddedEventAvro.newBuilder()
                         .setId(added.getId())
                         .setType(DeviceTypeAvro.valueOf(added.getDeviceType().name()))
                         .build());
             }
             case DEVICE_REMOVED -> {
-                DeviceRemovedEvent removed = (DeviceRemovedEvent) event.getPayload();
+                DeviceRemovedEvent removed = (DeviceRemovedEvent) event;
                 builder.setPayload(DeviceRemovedEventAvro.newBuilder()
                         .setId(removed.getId())
                         .build());
             }
             case SCENARIO_ADDED -> {
-                ScenarioAddedEvent scenarioAdded = (ScenarioAddedEvent) event.getPayload();
+                ScenarioAddedEvent scenarioAdded = (ScenarioAddedEvent) event;
                 builder.setPayload(ScenarioAddedEventAvro.newBuilder()
                         .setName(scenarioAdded.getName())
                         .setConditions(
@@ -53,7 +53,7 @@ public class HubAvroMapper {
                         .build());
             }
             case SCENARIO_REMOVED -> {
-                ScenarioRemovedEvent scenarioRemoved = (ScenarioRemovedEvent) event.getPayload();
+                ScenarioRemovedEvent scenarioRemoved = (ScenarioRemovedEvent) event;
                 builder.setPayload(ScenarioRemovedEventAvro.newBuilder()
                         .setName(scenarioRemoved.getName())
                         .build());
