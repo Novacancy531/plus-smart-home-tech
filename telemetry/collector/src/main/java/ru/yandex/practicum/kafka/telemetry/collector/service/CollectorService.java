@@ -1,10 +1,10 @@
 package ru.yandex.practicum.kafka.telemetry.collector.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.kafka.telemetry.collector.kafka.AvroSerializer;
 import ru.yandex.practicum.kafka.telemetry.collector.model.hub.HubEvent;
@@ -15,27 +15,39 @@ import static ru.yandex.practicum.kafka.telemetry.collector.service.SensorAvroMa
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class CollectorService {
 
     private final KafkaProducer<String, byte[]> producer;
 
-    public static final String SENSOR_TOPIC = "telemetry.sensors.v1";
-    public static final String HUB_TOPIC = "telemetry.hubs.v1";
+    @Value("${collector.kafka.topics.sensors}")
+    private String sensorTopic;
+
+    @Value("${collector.kafka.topics.hubs}")
+    private String hubTopic;
 
     public void sendSensorEvent(SensorEvent event) {
         SpecificRecordBase avroRecord = sensorToAvro(event);
         byte[] data = AvroSerializer.serialize(avroRecord);
-
-        log.info("Sending sensor event {}", data);
-        producer.send(new ProducerRecord<>(SENSOR_TOPIC, event.getId(), data));
+        ProducerRecord<String, byte[]> record = new ProducerRecord<>(
+                sensorTopic,
+                null,
+                event.getTimestamp().toEpochMilli(),
+                event.getHubId(),
+                data
+        );
+        producer.send(record);
     }
 
     public void sendHubEvent(HubEvent event) {
         SpecificRecordBase avroRecord = hubToAvro(event);
         byte[] data = AvroSerializer.serialize(avroRecord);
-
-        log.info("Sending hub event {}", data);
-        producer.send(new ProducerRecord<>(HUB_TOPIC, event.getHubId(), data));
+        ProducerRecord<String, byte[]> record = new ProducerRecord<>(
+                hubTopic,
+                null,
+                event.getTimestamp().toEpochMilli(),
+                event.getHubId(),
+                data
+        );
+        producer.send(record);
     }
 }
