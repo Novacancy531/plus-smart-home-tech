@@ -48,7 +48,11 @@ public class SensorEventGrpcMapper {
         event.setId(proto.getId());
         event.setHubId(proto.getHubId());
         event.setTimestamp(toInstant(proto));
-        event.setLuminosity(proto.getLightSensorEvent().getLuminosity());
+
+        var payload = proto.getLightSensorEvent();
+        event.setLinkQuality(payload.getLinkQuality());
+        event.setLuminosity(payload.getLuminosity());
+
         return event;
     }
 
