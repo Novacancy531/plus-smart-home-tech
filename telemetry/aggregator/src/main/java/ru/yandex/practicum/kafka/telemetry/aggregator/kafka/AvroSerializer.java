@@ -4,20 +4,31 @@ import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.common.serialization.Serializer;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Map;
 
-public class AvroSerializer {
+public class AvroSerializer<T extends SpecificRecordBase> implements Serializer<T> {
 
-    public static <T extends SpecificRecordBase> byte[] serialize(T record) {
+    @Override
+    public void configure(Map<String, ?> configs, boolean isKey) {}
+
+    @Override
+    public byte[] serialize(String topic, T data) {
+        if (data == null) return null;
+
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            SpecificDatumWriter<T> writer = new SpecificDatumWriter<>(record.getSchema());
+            var writer = new SpecificDatumWriter<T>(data.getSchema());
             BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-            writer.write(record, encoder);
+            writer.write(data, encoder);
             encoder.flush();
             return out.toByteArray();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to serialize", e);
+            throw new RuntimeException("Failed to serialize avro", e);
         }
     }
+
+    @Override
+    public void close() {}
 }
