@@ -42,7 +42,7 @@ public class HubEventProcessor implements Runnable {
     private final ConditionRepository conditionRepository;
     private final ActionRepository actionRepository;
 
-    @Value("${analyzer.kafka.topics.hub-events}")
+    @Value("${analyzer.topics.hub-events}")
     private String hubEventsTopic;
 
     private volatile boolean running = true;
