@@ -1,0 +1,34 @@
+server:
+  port: 8082
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/analyzer
+    username: analyzer
+    password: analyzer
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: always
+
+kafka:
+  bootstrap-servers: localhost:9092
+
+analyzer:
+  topics:
+    snapshots: telemetry.snapshots.v1
+    hub-events: telemetry.hubs.v1
+
+grpc:
+  client:
+    hub-router:
+      address: "static://localhost:59090"
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
