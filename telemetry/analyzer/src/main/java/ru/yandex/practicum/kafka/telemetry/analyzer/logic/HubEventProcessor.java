@@ -7,25 +7,12 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Action;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Condition;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Scenario;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.ScenarioAction;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.ScenarioActionId;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.ScenarioCondition;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.ScenarioConditionId;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Sensor;
+import ru.yandex.practicum.kafka.telemetry.analyzer.domain.*;
 import ru.yandex.practicum.kafka.telemetry.analyzer.repository.ActionRepository;
 import ru.yandex.practicum.kafka.telemetry.analyzer.repository.ConditionRepository;
 import ru.yandex.practicum.kafka.telemetry.analyzer.repository.ScenarioRepository;
 import ru.yandex.practicum.kafka.telemetry.analyzer.repository.SensorRepository;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceActionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.DeviceRemovedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.HubEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioAddedEventAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioConditionAvro;
-import ru.yandex.practicum.kafka.telemetry.event.ScenarioRemovedEventAvro;
+import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -142,7 +129,12 @@ public class HubEventProcessor implements Runnable {
                 .orElseGet(() -> Scenario.builder()
                         .hubId(hubId)
                         .name(name)
-                        .build());
+                        .build()
+                );
+
+        if (scenario.getId() == null) {
+            scenario = scenarioRepository.save(scenario);
+        }
 
         List<ScenarioCondition> scenarioConditions = new ArrayList<>();
         List<ScenarioAction> scenarioActions = new ArrayList<>();
@@ -159,7 +151,11 @@ public class HubEventProcessor implements Runnable {
             condition = conditionRepository.save(condition);
 
             ScenarioCondition sc = ScenarioCondition.builder()
-                    .id(new ScenarioConditionId(null, sensorId, condition.getId()))
+                    .id(new ScenarioConditionId(
+                            scenario.getId(),
+                            sensorId,
+                            condition.getId()
+                    ))
                     .scenario(scenario)
                     .sensor(sensor)
                     .condition(condition)
@@ -179,7 +175,11 @@ public class HubEventProcessor implements Runnable {
             action = actionRepository.save(action);
 
             ScenarioAction sa = ScenarioAction.builder()
-                    .id(new ScenarioActionId(null, sensorId, action.getId()))
+                    .id(new ScenarioActionId(
+                            scenario.getId(),
+                            sensorId,
+                            action.getId()
+                    ))
                     .scenario(scenario)
                     .sensor(sensor)
                     .action(action)
@@ -206,20 +206,14 @@ public class HubEventProcessor implements Runnable {
 
     private Integer extractConditionValue(ScenarioConditionAvro condAvro) {
         Object v = condAvro.getValue();
-        if (v instanceof Integer i) {
-            return i;
-        }
-        if (v instanceof Boolean b) {
-            return b ? 1 : 0;
-        }
+        if (v instanceof Integer i) return i;
+        if (v instanceof Boolean b) return b ? 1 : 0;
         return null;
     }
 
     private Integer extractActionValue(DeviceActionAvro actionAvro) {
         Object v = actionAvro.getValue();
-        if (v instanceof Integer i) {
-            return i;
-        }
+        if (v instanceof Integer i) return i;
         return null;
     }
 }
