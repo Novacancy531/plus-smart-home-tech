@@ -26,14 +26,14 @@ public class ScenarioExecutor {
 
         for (Scenario scenario : scenarios) {
 
-            boolean ok = scenario.getConditions().stream()
+            boolean ok = scenario.getScenarioConditions().stream()
                     .allMatch(cond -> checkCondition(cond, states));
 
             if (!ok) {
                 continue;
             }
 
-            for (ScenarioAction action : scenario.getActions()) {
+            for (ScenarioAction action : scenario.getScenarioActions()) {
                 sendAction(hubId, scenario.getName(), action);
             }
         }

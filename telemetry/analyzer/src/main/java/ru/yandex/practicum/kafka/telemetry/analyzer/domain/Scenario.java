@@ -28,13 +28,6 @@ public class Scenario {
 
     @OneToMany(mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScenarioAction> scenarioActions;
-
-    public List<ScenarioCondition> getConditions() {
-        return scenarioConditions;
-    }
-
-    public List<ScenarioAction> getActions() {
-        return scenarioActions;
-    }
 }
+
 
