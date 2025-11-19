@@ -17,24 +17,32 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class SnapshotProcessor {
+public class SnapshotProcessor implements Runnable {
 
     private final KafkaConsumer<String, SensorsSnapshotAvro> consumer;
     private final ScenarioRepository scenarioRepository;
     private final ScenarioExecutor scenarioExecutor;
 
-    public void start() {
+    @Override
+    public void run() {
+        startInternal();
+    }
+
+    private void startInternal() {
         try {
             while (true) {
                 ConsumerRecords<String, SensorsSnapshotAvro> records =
                         consumer.poll(Duration.ofMillis(500));
+
                 for (ConsumerRecord<String, SensorsSnapshotAvro> record : records) {
                     SensorsSnapshotAvro snapshot = record.value();
                     if (snapshot == null) {
                         continue;
                     }
+
                     String hubId = snapshot.getHubId();
                     List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
+
                     if (!scenarios.isEmpty()) {
                         scenarioExecutor.processSnapshot(snapshot, scenarios);
                     }
