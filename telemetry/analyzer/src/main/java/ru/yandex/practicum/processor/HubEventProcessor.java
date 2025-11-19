@@ -38,7 +38,6 @@ public class HubEventProcessor implements Runnable {
 
     @Override
     public void run() {
-        log.info("Запуск HubEventProcessor. Подписка на топик: {}", hubEventsTopic);
 
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -60,12 +59,11 @@ public class HubEventProcessor implements Runnable {
             }
         } catch (WakeupException ignored) {
         } catch (Exception e) {
-            log.error("Ошибка в HubEventProcessor: ", e);
+            e.printStackTrace();
         }
     }
 
     private void processEvent(HubEventAvro event) {
-        log.debug("Получено событие HubEventAvro: {}", event);
 
         switch (event.getPayload().getClass().getSimpleName()) {
             case "DeviceAddedEventAvro" -> handleDeviceAdded(event);
@@ -88,7 +86,6 @@ public class HubEventProcessor implements Runnable {
                             .id(sensorId)
                             .hubId(hubId)
                             .build());
-                    log.info("Добавлен новый сенсор {} в хаб {}", sensorId, hubId);
                 });
     }
 
@@ -98,9 +95,6 @@ public class HubEventProcessor implements Runnable {
 
         if (sensorRepository.existsById(sensorId)) {
             sensorRepository.deleteById(sensorId);
-            log.info("Удалён сенсор {}", sensorId);
-        } else {
-            log.debug("Попытка удалить несуществующий сенсор {}", sensorId);
         }
     }
 
@@ -165,9 +159,6 @@ public class HubEventProcessor implements Runnable {
         });
 
         scenarioRepository.save(scenario);
-
-        log.info("Добавлен сценарий {} для хаба {} ({} условий, {} действий)",
-                name, hubId, payload.getConditions().size(), payload.getActions().size());
     }
 
     private void handleScenarioRemoved(HubEventAvro event) {
