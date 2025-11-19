@@ -2,7 +2,6 @@ package ru.yandex.practicum.kafka.telemetry.analyzer.logic;
 
 import com.google.protobuf.util.Timestamps;
 import lombok.RequiredArgsConstructor;
-import org.apache.avro.util.Utf8;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
@@ -22,7 +21,6 @@ public class ScenarioExecutor {
     public void processSnapshot(SensorsSnapshotAvro snapshot, List<Scenario> scenarios) {
         String hubId = snapshot.getHubId().toString();
 
-        // НОРМАЛИЗАЦИЯ КЛЮЧЕЙ ЧТОБЫ ВСЁ СОВПАДАЛО
         Map<String, SensorStateAvro> states = new HashMap<>();
         snapshot.getSensorsState().forEach((k, v) -> states.put(k.toString(), v));
 
@@ -78,12 +76,11 @@ public class ScenarioExecutor {
             return null;
         }
 
-        // НОРМАЛИЗАЦИЯ ТИПОВ СО СЦЕНАРИЯ (приходит как TEMPERATURE, SWITCH, MOTION и т.д.)
         String t = type.toUpperCase(Locale.ROOT);
 
         switch (t) {
             case "TEMPERATURE":
-            case "CLIMATE_TEMPERATURE":  // на всякий случай
+            case "CLIMATE_TEMPERATURE":
                 if (data instanceof TemperatureSensorAvro t1) return t1.getTemperatureC();
                 if (data instanceof ClimateSensorAvro c) return c.getTemperatureC();
                 return null;
