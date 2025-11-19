@@ -1,15 +1,11 @@
-package ru.yandex.practicum.kafka.telemetry.analyzer.domain;
+package ru.yandex.practicum.kafka.telemetry.analyzer.model;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Data;
 
+@Data
 @Entity
 @Table(name = "conditions")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Condition {
 
     @Id

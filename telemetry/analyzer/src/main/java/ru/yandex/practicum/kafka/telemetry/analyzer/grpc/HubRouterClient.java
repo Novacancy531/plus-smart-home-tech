@@ -1,26 +1,24 @@
 package ru.yandex.practicum.kafka.telemetry.analyzer.grpc;
 
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import net.devh.boot.grpc.client.inject.GrpcClient;
-import org.springframework.stereotype.Service;
-import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc.HubRouterControllerBlockingStub;
-import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
+import java.time.Instant;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.kafka.telemetry.analyzer.model.Action;
 
-
-@Service
-@RequiredArgsConstructor
+@Component
 public class HubRouterClient {
 
-    @GrpcClient("hub-router")
-    private HubRouterControllerBlockingStub stub;
+    private final ManagedChannel channel;
 
-    @PostConstruct
-    public void debug() {
-        System.out.println("Hub router = " + stub);
+    public HubRouterClient() {
+        this.channel = ManagedChannelBuilder
+                .forAddress("localhost", 59090)
+                .usePlaintext()
+                .build();
     }
 
-    public void sendDeviceAction(DeviceActionRequest request) {
-        stub.handleDeviceAction(request);
+    public void sendAction(String hubId, String scenarioName, Action action) {
+        Instant now = Instant.now();
     }
 }

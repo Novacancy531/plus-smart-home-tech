@@ -1,10 +1,9 @@
 package ru.yandex.practicum.kafka.telemetry.analyzer.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Sensor;
-
 import java.util.Collection;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
+import ru.yandex.practicum.kafka.telemetry.analyzer.model.Sensor;
 
 public interface SensorRepository extends JpaRepository<Sensor, String> {
 
