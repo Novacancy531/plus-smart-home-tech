@@ -40,7 +40,7 @@ public class SnapshotProcessor implements Runnable {
                         continue;
                     }
 
-                    String hubId = snapshot.getHubId();
+                    String hubId = String.valueOf(snapshot.getHubId());
                     List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
 
                     if (!scenarios.isEmpty()) {
