@@ -3,23 +3,15 @@ package ru.yandex.practicum.kafka.telemetry.analyzer.logic;
 import com.google.protobuf.util.Timestamps;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Action;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Condition;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Scenario;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.ScenarioAction;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.ScenarioCondition;
-import ru.yandex.practicum.kafka.telemetry.analyzer.domain.Sensor;
+
+import ru.yandex.practicum.kafka.telemetry.analyzer.domain.*;
 import ru.yandex.practicum.kafka.telemetry.analyzer.grpc.HubRouterClient;
-import ru.yandex.practicum.kafka.telemetry.event.ClimateSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.LightSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.MotionSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorStateAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
-import ru.yandex.practicum.kafka.telemetry.event.SwitchSensorAvro;
-import ru.yandex.practicum.kafka.telemetry.event.TemperatureSensorAvro;
+
+import ru.yandex.practicum.kafka.telemetry.event.*;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,41 +26,43 @@ public class ScenarioExecutor {
 
     public void processSnapshot(SensorsSnapshotAvro snapshot, List<Scenario> scenarios) {
         String hubId = snapshot.getHubId().toString();
-        Map<CharSequence, SensorStateAvro> states = new HashMap<>();
-        snapshot.getSensorsState().forEach((k, v) -> states.put(k, v));
 
+        Map<String, SensorStateAvro> states = new HashMap<>();
+        snapshot.getSensorsState().forEach((k, v) -> states.put(k.toString(), v));
 
         for (Scenario scenario : scenarios) {
-            boolean allConditionsOk = scenario.getConditions().stream()
+
+            boolean allConditionsOk = scenario.getScenarioConditions().stream()
                     .allMatch(sc -> checkCondition(sc, states));
 
             if (!allConditionsOk) {
                 continue;
             }
 
-            for (ScenarioAction action : scenario.getActions()) {
+            for (ScenarioAction action : scenario.getScenarioActions()) {
                 sendAction(hubId, scenario.getName(), action);
             }
         }
     }
 
-    private boolean checkCondition(ScenarioCondition scenarioCondition,
-                                   Map<CharSequence, SensorStateAvro> states) {
-        Sensor sensor = scenarioCondition.getSensor();
+    private boolean checkCondition(ScenarioCondition sc, Map<String, SensorStateAvro> states) {
+        Sensor sensor = sc.getSensor();
         SensorStateAvro state = states.get(sensor.getId());
+
         if (state == null) {
             return false;
         }
 
-        Condition condition = scenarioCondition.getCondition();
+        Condition condition = sc.getCondition();
+
         Integer actual = extractIntValue(state, condition.getType());
         Integer expected = condition.getValue();
+
         if (actual == null || expected == null) {
             return false;
         }
 
-        String op = condition.getOperation();
-        return switch (op) {
+        return switch (condition.getOperation()) {
             case "GREATER_THAN" -> actual > expected;
             case "LOWER_THAN" -> actual < expected;
             case "EQUALS" -> Objects.equals(actual, expected);
@@ -78,78 +72,59 @@ public class ScenarioExecutor {
 
     private Integer extractIntValue(SensorStateAvro state, String type) {
         Object data = state.getData();
-        if (data == null || type == null) {
-            return null;
-        }
 
-        if ("TEMPERATURE".equals(type)) {
-            if (data instanceof TemperatureSensorAvro t) {
-                return t.getTemperatureC();
-            }
-            if (data instanceof ClimateSensorAvro c) {
-                return c.getTemperatureC();
-            }
-            return null;
-        }
+        if (data == null || type == null) return null;
 
-        if ("CO2LEVEL".equals(type)) {
-            if (data instanceof ClimateSensorAvro c) {
-                return c.getCo2Level();
+        return switch (type) {
+            case "TEMPERATURE" -> {
+                if (data instanceof TemperatureSensorAvro t) yield t.getTemperatureC();
+                if (data instanceof ClimateSensorAvro c) yield c.getTemperatureC();
+                yield null;
             }
-            return null;
-        }
-
-        if ("HUMIDITY".equals(type)) {
-            if (data instanceof ClimateSensorAvro c) {
-                return c.getHumidity();
+            case "CO2LEVEL" -> {
+                if (data instanceof ClimateSensorAvro c) yield c.getCo2Level();
+                yield null;
             }
-            return null;
-        }
-
-        if ("LUMINOSITY".equals(type)) {
-            if (data instanceof LightSensorAvro l) {
-                return l.getLuminosity();
+            case "HUMIDITY" -> {
+                if (data instanceof ClimateSensorAvro c) yield c.getHumidity();
+                yield null;
             }
-            return null;
-        }
-
-        if ("SWITCH".equals(type)) {
-            if (data instanceof SwitchSensorAvro s) {
-                return s.getState() ? 1 : 0;
+            case "LUMINOSITY" -> {
+                if (data instanceof LightSensorAvro l) yield l.getLuminosity();
+                yield null;
             }
-            return null;
-        }
-
-        if ("MOTION".equals(type)) {
-            if (data instanceof MotionSensorAvro m) {
-                return m.getMotion() ? 1 : 0;
+            case "SWITCH" -> {
+                if (data instanceof SwitchSensorAvro s) yield s.getState() ? 1 : 0;
+                yield null;
             }
-            return null;
-        }
-
-        return null;
+            case "MOTION" -> {
+                if (data instanceof MotionSensorAvro m) yield m.getMotion() ? 1 : 0;
+                yield null;
+            }
+            default -> null;
+        };
     }
 
-    private void sendAction(String hubId, String scenarioName, ScenarioAction scenarioAction) {
-        Action action = scenarioAction.getAction();
+    private void sendAction(String hubId, String scenarioName, ScenarioAction sa) {
+        Action action = sa.getAction();
 
         ActionTypeProto typeProto = ActionTypeProto.valueOf(action.getType());
 
-        DeviceActionProto.Builder actionBuilder = DeviceActionProto.newBuilder()
-                .setSensorId(scenarioAction.getSensor().getId())
+        DeviceActionProto.Builder ab = DeviceActionProto.newBuilder()
+                .setSensorId(sa.getSensor().getId())
                 .setType(typeProto);
 
         if (action.getValue() != null) {
-            actionBuilder.setValue(action.getValue());
+            ab.setValue(action.getValue());
         }
 
-        DeviceActionRequest request = DeviceActionRequest.newBuilder()
+        DeviceActionRequest req = DeviceActionRequest.newBuilder()
                 .setHubId(hubId)
                 .setScenarioName(scenarioName)
-                .setAction(actionBuilder.build())
+                .setAction(ab.build())
                 .setTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
                 .build();
 
-        hubRouterClient.sendDeviceAction(request);
+        hubRouterClient.sendDeviceAction(req);
     }
 }
