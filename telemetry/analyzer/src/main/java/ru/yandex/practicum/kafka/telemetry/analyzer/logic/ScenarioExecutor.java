@@ -2,21 +2,16 @@ package ru.yandex.practicum.kafka.telemetry.analyzer.logic;
 
 import com.google.protobuf.util.Timestamps;
 import lombok.RequiredArgsConstructor;
+import org.apache.avro.util.Utf8;
 import org.springframework.stereotype.Service;
-
 import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
-
 import ru.yandex.practicum.kafka.telemetry.analyzer.domain.*;
 import ru.yandex.practicum.kafka.telemetry.analyzer.grpc.HubRouterClient;
-
 import ru.yandex.practicum.kafka.telemetry.event.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -27,19 +22,20 @@ public class ScenarioExecutor {
     public void processSnapshot(SensorsSnapshotAvro snapshot, List<Scenario> scenarios) {
         String hubId = snapshot.getHubId().toString();
 
+        // НОРМАЛИЗАЦИЯ КЛЮЧЕЙ ЧТОБЫ ВСЁ СОВПАДАЛО
         Map<String, SensorStateAvro> states = new HashMap<>();
         snapshot.getSensorsState().forEach((k, v) -> states.put(k.toString(), v));
 
         for (Scenario scenario : scenarios) {
 
-            boolean allConditionsOk = scenario.getScenarioConditions().stream()
-                    .allMatch(sc -> checkCondition(sc, states));
+            boolean ok = scenario.getConditions().stream()
+                    .allMatch(cond -> checkCondition(cond, states));
 
-            if (!allConditionsOk) {
+            if (!ok) {
                 continue;
             }
 
-            for (ScenarioAction action : scenario.getScenarioActions()) {
+            for (ScenarioAction action : scenario.getActions()) {
                 sendAction(hubId, scenario.getName(), action);
             }
         }
@@ -47,13 +43,19 @@ public class ScenarioExecutor {
 
     private boolean checkCondition(ScenarioCondition sc, Map<String, SensorStateAvro> states) {
         Sensor sensor = sc.getSensor();
-        SensorStateAvro state = states.get(sensor.getId());
+        if (sensor == null) {
+            return false;
+        }
 
+        SensorStateAvro state = states.get(sensor.getId());
         if (state == null) {
             return false;
         }
 
         Condition condition = sc.getCondition();
+        if (condition == null || condition.getType() == null) {
+            return false;
+        }
 
         Integer actual = extractIntValue(state, condition.getType());
         Integer expected = condition.getValue();
@@ -72,59 +74,63 @@ public class ScenarioExecutor {
 
     private Integer extractIntValue(SensorStateAvro state, String type) {
         Object data = state.getData();
-
-        if (data == null || type == null) return null;
-
-        return switch (type) {
-            case "TEMPERATURE" -> {
-                if (data instanceof TemperatureSensorAvro t) yield t.getTemperatureC();
-                if (data instanceof ClimateSensorAvro c) yield c.getTemperatureC();
-                yield null;
-            }
-            case "CO2LEVEL" -> {
-                if (data instanceof ClimateSensorAvro c) yield c.getCo2Level();
-                yield null;
-            }
-            case "HUMIDITY" -> {
-                if (data instanceof ClimateSensorAvro c) yield c.getHumidity();
-                yield null;
-            }
-            case "LUMINOSITY" -> {
-                if (data instanceof LightSensorAvro l) yield l.getLuminosity();
-                yield null;
-            }
-            case "SWITCH" -> {
-                if (data instanceof SwitchSensorAvro s) yield s.getState() ? 1 : 0;
-                yield null;
-            }
-            case "MOTION" -> {
-                if (data instanceof MotionSensorAvro m) yield m.getMotion() ? 1 : 0;
-                yield null;
-            }
-            default -> null;
-        };
-    }
-
-    private void sendAction(String hubId, String scenarioName, ScenarioAction sa) {
-        Action action = sa.getAction();
-
-        ActionTypeProto typeProto = ActionTypeProto.valueOf(action.getType());
-
-        DeviceActionProto.Builder ab = DeviceActionProto.newBuilder()
-                .setSensorId(sa.getSensor().getId())
-                .setType(typeProto);
-
-        if (action.getValue() != null) {
-            ab.setValue(action.getValue());
+        if (data == null) {
+            return null;
         }
 
-        DeviceActionRequest req = DeviceActionRequest.newBuilder()
+        // НОРМАЛИЗАЦИЯ ТИПОВ СО СЦЕНАРИЯ (приходит как TEMPERATURE, SWITCH, MOTION и т.д.)
+        String t = type.toUpperCase(Locale.ROOT);
+
+        switch (t) {
+            case "TEMPERATURE":
+            case "CLIMATE_TEMPERATURE":  // на всякий случай
+                if (data instanceof TemperatureSensorAvro t1) return t1.getTemperatureC();
+                if (data instanceof ClimateSensorAvro c) return c.getTemperatureC();
+                return null;
+
+            case "CO2LEVEL":
+                if (data instanceof ClimateSensorAvro c2) return c2.getCo2Level();
+                return null;
+
+            case "HUMIDITY":
+                if (data instanceof ClimateSensorAvro c3) return c3.getHumidity();
+                return null;
+
+            case "LUMINOSITY":
+                if (data instanceof LightSensorAvro l) return l.getLuminosity();
+                return null;
+
+            case "MOTION":
+                if (data instanceof MotionSensorAvro m) return m.getMotion() ? 1 : 0;
+                return null;
+
+            case "SWITCH":
+                if (data instanceof SwitchSensorAvro s) return s.getState() ? 1 : 0;
+                return null;
+
+            default:
+                return null;
+        }
+    }
+
+    private void sendAction(String hubId, String scenarioName, ScenarioAction scenarioAction) {
+        Action action = scenarioAction.getAction();
+
+        DeviceActionProto.Builder builder = DeviceActionProto.newBuilder()
+                .setSensorId(scenarioAction.getSensor().getId())
+                .setType(ActionTypeProto.valueOf(action.getType()));
+
+        if (action.getValue() != null) {
+            builder.setValue(action.getValue());
+        }
+
+        DeviceActionRequest request = DeviceActionRequest.newBuilder()
                 .setHubId(hubId)
                 .setScenarioName(scenarioName)
-                .setAction(ab.build())
+                .setAction(builder.build())
                 .setTimestamp(Timestamps.fromMillis(System.currentTimeMillis()))
                 .build();
 
-        hubRouterClient.sendDeviceAction(req);
+        hubRouterClient.sendDeviceAction(request);
     }
 }
