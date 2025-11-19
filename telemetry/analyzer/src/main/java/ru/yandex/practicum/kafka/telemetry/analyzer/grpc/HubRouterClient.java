@@ -1,24 +1,33 @@
 package ru.yandex.practicum.kafka.telemetry.analyzer.grpc;
 
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import java.time.Instant;
+import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.analyzer.model.Action;
+import ru.yandex.practicum.grpc.telemetry.hubrouter.HubRouterControllerGrpc;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
+import ru.yandex.practicum.grpc.telemetry.event.DeviceActionRequest;
+import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
 
 @Component
 public class HubRouterClient {
 
-    private final ManagedChannel channel;
+    @GrpcClient("hub-router")
+    private HubRouterControllerGrpc.HubRouterControllerBlockingStub client;
 
-    public HubRouterClient() {
-        this.channel = ManagedChannelBuilder
-                .forAddress("localhost", 59090)
-                .usePlaintext()
+    public void sendAction(String hubId, String scenarioName, String sensorId, Action action) {
+
+        DeviceActionProto proto = DeviceActionProto.newBuilder()
+                .setSensorId(sensorId)
+                .setType(ActionTypeProto.valueOf(action.getType()))
+                .setValue(action.getValue())
                 .build();
-    }
 
-    public void sendAction(String hubId, String scenarioName, Action action) {
-        Instant now = Instant.now();
+        DeviceActionRequest request = DeviceActionRequest.newBuilder()
+                .setHubId(hubId)
+                .setScenarioName(scenarioName)
+                .setAction(proto)
+                .build();
+
+        client.handleDeviceAction(request);
     }
 }

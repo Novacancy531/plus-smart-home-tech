@@ -14,8 +14,7 @@ import ru.yandex.practicum.kafka.telemetry.analyzer.service.dto.Snapshot;
 import ru.yandex.practicum.kafka.telemetry.analyzer.service.dto.SensorState;
 
 import java.time.Duration;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 @Component
 public class SnapshotProcessor {
@@ -51,7 +50,7 @@ public class SnapshotProcessor {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
-        consumer.subscribe(java.util.List.of(topic));
+        consumer.subscribe(List.of(topic));
 
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(200));
@@ -67,9 +66,18 @@ public class SnapshotProcessor {
             List<Scenario> scenarios = scenarioRepository.findByHubId(snapshot.getHubId());
 
             for (Scenario scenario : scenarios) {
-                if (matchScenario(snapshot, scenario)) {
+                List<String> matchedSensors = matchScenario(snapshot, scenario);
+
+                if (!matchedSensors.isEmpty()) {
                     for (Action action : scenario.getActions()) {
-                        hubRouterClient.sendAction(snapshot.getHubId(), scenario.getName(), action);
+                        for (String sensorId : matchedSensors) {
+                            hubRouterClient.sendAction(
+                                    snapshot.getHubId(),
+                                    scenario.getName(),
+                                    sensorId,
+                                    action
+                            );
+                        }
                     }
                 }
             }
@@ -77,36 +85,35 @@ public class SnapshotProcessor {
         }
     }
 
-    private boolean matchScenario(Snapshot snapshot, Scenario scenario) {
+    private List<String> matchScenario(Snapshot snapshot, Scenario scenario) {
         List<SensorState> sensors = snapshot.getSensors();
         List<Condition> conditions = scenario.getConditions();
+        List<String> matchedSensors = new ArrayList<>();
 
         for (Condition condition : conditions) {
             boolean matched = false;
 
             for (SensorState state : sensors) {
-                if (!condition.getType().equals(state.getType())) {
-                    continue;
-                }
+                if (!condition.getType().equals(state.getType())) continue;
+                if (state.getValue() == null) continue;
 
                 Integer value = state.getValue();
-                if (value == null) {
-                    continue;
-                }
-
-                String op = condition.getOperation();
                 Integer t = condition.getValue();
+                String op = condition.getOperation();
 
                 if (op.equals(">") && value > t) matched = true;
                 else if (op.equals("<") && value < t) matched = true;
                 else if (op.equals("==") && value.equals(t)) matched = true;
 
-                if (matched) break;
+                if (matched) {
+                    matchedSensors.add(state.getId());
+                    break;
+                }
             }
 
-            if (!matched) return false;
+            if (!matched) return List.of();
         }
 
-        return true;
+        return matchedSensors;
     }
 }

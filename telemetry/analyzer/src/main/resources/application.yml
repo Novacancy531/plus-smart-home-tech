@@ -23,6 +23,9 @@ telemetry:
     hub-events-group-id: analyzer-hub-events
 
 grpc:
-  hub-router:
-    host: localhost
-    port: 59090
+  client:
+    hub-router:
+      address: static://localhost:59090
+      negotiationType: plaintext
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
