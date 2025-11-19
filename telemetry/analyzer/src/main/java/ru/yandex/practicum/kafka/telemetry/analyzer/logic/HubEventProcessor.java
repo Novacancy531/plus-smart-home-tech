@@ -5,7 +5,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.errors.WakeupException;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.analyzer.domain.*;
 import ru.yandex.practicum.kafka.telemetry.analyzer.repository.ActionRepository;
@@ -29,9 +28,6 @@ public class HubEventProcessor implements Runnable {
     private final ConditionRepository conditionRepository;
     private final ActionRepository actionRepository;
 
-    @Value("${analyzer.topics.hub-events}")
-    private String hubEventsTopic;
-
     private volatile boolean running = true;
 
     public void shutdown() {
@@ -41,8 +37,6 @@ public class HubEventProcessor implements Runnable {
 
     @Override
     public void run() {
-        hubEventsConsumer.subscribe(List.of(hubEventsTopic));
-
         try {
             while (running) {
                 ConsumerRecords<String, HubEventAvro> records =
@@ -50,19 +44,16 @@ public class HubEventProcessor implements Runnable {
 
                 for (ConsumerRecord<String, HubEventAvro> record : records) {
                     HubEventAvro event = record.value();
-                    if (event != null) {
-                        processEvent(event);
-                    }
+                    if (event != null) processEvent(event);
                 }
             }
         } catch (WakeupException e) {
-            if (running) {
-                throw e;
-            }
+            if (running) throw e;
         } finally {
             hubEventsConsumer.close();
         }
     }
+
 
     private void processEvent(HubEventAvro event) {
         String hubId = event.getHubId().toString();
