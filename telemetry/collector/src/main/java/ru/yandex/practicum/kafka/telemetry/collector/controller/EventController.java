@@ -1,34 +1,42 @@
 package ru.yandex.practicum.kafka.telemetry.collector.controller;
 
+import com.google.protobuf.Empty;
+import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import net.devh.boot.grpc.server.service.GrpcService;
+import ru.yandex.practicum.grpc.telemetry.collector.CollectorControllerGrpc;
+import ru.yandex.practicum.grpc.telemetry.event.HubEventProto;
+import ru.yandex.practicum.grpc.telemetry.event.SensorEventProto;
 import ru.yandex.practicum.kafka.telemetry.collector.model.hub.HubEvent;
 import ru.yandex.practicum.kafka.telemetry.collector.model.sensor.SensorEvent;
-
-import jakarta.validation.Valid;
 import ru.yandex.practicum.kafka.telemetry.collector.service.CollectorService;
+import ru.yandex.practicum.kafka.telemetry.collector.service.HubEventGrpcMapper;
+import ru.yandex.practicum.kafka.telemetry.collector.service.SensorEventGrpcMapper;
 
-@RestController
-@RequestMapping("/events")
+@GrpcService
 @RequiredArgsConstructor
-@Slf4j
-public class EventController {
-
+public class EventController extends CollectorControllerGrpc.CollectorControllerImplBase {
     private final CollectorService collectorService;
 
-    @PostMapping("/sensors")
-    @ResponseStatus(HttpStatus.OK)
-    public void collectSensorEvent(@Valid @RequestBody SensorEvent event) {
-        log.info("Collecting sensor event {}", event);
+    @Override
+    public void collectSensorEvent(SensorEventProto request,
+                                   StreamObserver<Empty> responseObserver) {
+
+        SensorEvent event = SensorEventGrpcMapper.toModel(request);
         collectorService.sendSensorEvent(event);
+
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 
-    @PostMapping("/hubs")
-    @ResponseStatus(HttpStatus.OK)
-    public void collectHubEvent(@Valid @RequestBody HubEvent event) {
-        log.info("Collecting hub event {}", event);
+    @Override
+    public void collectHubEvent(HubEventProto request,
+                                StreamObserver<Empty> responseObserver) {
+
+        HubEvent event = HubEventGrpcMapper.toModel(request);
         collectorService.sendHubEvent(event);
+
+        responseObserver.onNext(Empty.getDefaultInstance());
+        responseObserver.onCompleted();
     }
 }
