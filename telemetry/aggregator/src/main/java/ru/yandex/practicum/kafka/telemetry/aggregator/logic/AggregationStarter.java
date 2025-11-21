@@ -8,11 +8,13 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.SensorEventAvro;
 import ru.yandex.practicum.kafka.telemetry.event.SensorsSnapshotAvro;
 
 import java.time.Duration;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -23,14 +25,16 @@ public class AggregationStarter {
     private final KafkaProducer<String, SensorsSnapshotAvro> producer;
     private final SnapshotUpdater snapshotUpdater;
 
-    private static final String INPUT_TOPIC = "telemetry.sensors.v1";
-    private static final String OUTPUT_TOPIC = "telemetry.snapshots.v1";
+    @Value("${kafka.topics.sensors}")
+    private String INPUT_TOPIC;
+    @Value("${kafka.topics.snapshots}")
+    private String OUTPUT_TOPIC;
 
 
     public void start() {
 
         log.info("Aggregator starting…");
-        consumer.subscribe(java.util.List.of(INPUT_TOPIC));
+        consumer.subscribe(List.of(INPUT_TOPIC));
 
         try {
 

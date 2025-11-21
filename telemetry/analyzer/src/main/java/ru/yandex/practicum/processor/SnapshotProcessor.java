@@ -34,27 +34,39 @@ public class SnapshotProcessor {
     @GrpcClient("hub-router")
     private HubRouterControllerBlockingStub hubRouterClient;
 
-    @Value("${spring.kafka.bootstrap-servers}")
+    @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${analyzer.topics.snapshots}")
+    @Value("${kafka.topics.snapshots}")
     private String snapshotsTopic;
+
+    @Value("${kafka.consumer.snapshot.snapshot-group-id}")
+    private String snapshotGroupId;
+
+    @Value("${kafka.consumer.snapshot.auto-offset-reset}")
+    private String autoOffsetReset;
+
+    @Value("${kafka.consumer.snapshot.auto-commit}")
+    private Boolean autoCommit;
+
+    @Value("${kafka.consumer.snapshot.poll-timeout-ms}")
+    private long pollTimeoutMs;
 
     public void start() {
 
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "analyzer-snapshots-group");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, snapshotGroupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "ru.yandex.practicum.deserializer.SensorsSnapshotDeserializer");
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
 
         try (KafkaConsumer<String, SensorsSnapshotAvro> consumer = new KafkaConsumer<>(props)) {
             consumer.subscribe(Collections.singletonList(snapshotsTopic));
 
             while (true) {
-                ConsumerRecords<String, SensorsSnapshotAvro> records = consumer.poll(Duration.ofMillis(200));
+                ConsumerRecords<String, SensorsSnapshotAvro> records = consumer.poll(Duration.ofMillis(pollTimeoutMs));
 
                 for (ConsumerRecord<String, SensorsSnapshotAvro> record : records) {
                     SensorsSnapshotAvro snapshot = record.value();

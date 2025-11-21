@@ -2,19 +2,13 @@ package ru.yandex.practicum.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.errors.WakeupException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.kafka.telemetry.event.*;
 import ru.yandex.practicum.model.*;
-import ru.yandex.practicum.repository.ActionRepository;
-import ru.yandex.practicum.repository.ConditionRepository;
-import ru.yandex.practicum.repository.ScenarioRepository;
-import ru.yandex.practicum.repository.SensorRepository;
+import ru.yandex.practicum.repository.*;
 
 import java.time.Duration;
 import java.util.Collections;
@@ -30,41 +24,65 @@ public class HubEventProcessor implements Runnable {
     private final ConditionRepository conditionRepository;
     private final ActionRepository actionRepository;
 
-    @Value("${spring.kafka.bootstrap-servers}")
+    @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${analyzer.topics.hub-events}")
-    private String hubEventsTopic;
+    @Value("${kafka.topics.hub-events}")
+    private String hubTopic;
+
+    @Value("${kafka.consumer.hub.hub-group-id}")
+    private String hubGroupId;
+
+    @Value("${kafka.consumer.hub.auto-offset-reset}")
+    private String autoOffsetReset;
+
+    @Value("${kafka.consumer.hub.auto-commit}")
+    private Boolean autoCommit;
+
+    @Value("${kafka.consumer.hub.poll-timeout-ms}")
+    private long pollTimeoutMs;
+
+    private KafkaConsumer<String, HubEventAvro> consumer;
+
+    public void shutdown() {
+        if (consumer != null) {
+            log.info("Вызываю consumer.wakeup() для корректного завершения.");
+            consumer.wakeup();
+        }
+    }
 
     @Override
     public void run() {
-
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        props.put(ConsumerConfig.GROUP_ID_CONFIG, "analyzer-hub-events-group");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, hubGroupId);
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringDeserializer");
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, "ru.yandex.practicum.deserializer.HubEventDeserializer");
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, autoCommit);
 
         try (KafkaConsumer<String, HubEventAvro> consumer = new KafkaConsumer<>(props)) {
-            consumer.subscribe(Collections.singletonList(hubEventsTopic));
+            this.consumer = consumer;
+            consumer.subscribe(Collections.singletonList(hubTopic));
 
             while (true) {
-                ConsumerRecords<String, HubEventAvro> records = consumer.poll(Duration.ofMillis(200));
+                ConsumerRecords<String, HubEventAvro> records = consumer.poll(Duration.ofMillis(pollTimeoutMs));
                 for (ConsumerRecord<String, HubEventAvro> record : records) {
                     processEvent(record.value());
                 }
                 consumer.commitAsync();
             }
-        } catch (WakeupException ignored) {
+
+        } catch (WakeupException e) {
+            log.info("Consumer получил сигнал wakeup. Завершение работы.");
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Ошибка в обработчике событий хаба", e);
+        } finally {
+            log.info("Consumer закрывается.");
         }
     }
 
     private void processEvent(HubEventAvro event) {
-
         switch (event.getPayload().getClass().getSimpleName()) {
             case "DeviceAddedEventAvro" -> handleDeviceAdded(event);
             case "DeviceRemovedEventAvro" -> handleDeviceRemoved(event);
@@ -81,12 +99,11 @@ public class HubEventProcessor implements Runnable {
 
         sensorRepository.findById(sensorId).ifPresentOrElse(
                 s -> log.debug("Сенсор {} уже существует в хабе {}", sensorId, hubId),
-                () -> {
-                    sensorRepository.save(Sensor.builder()
-                            .id(sensorId)
-                            .hubId(hubId)
-                            .build());
-                });
+                () -> sensorRepository.save(Sensor.builder()
+                        .id(sensorId)
+                        .hubId(hubId)
+                        .build())
+        );
     }
 
     private void handleDeviceRemoved(HubEventAvro event) {
@@ -116,13 +133,9 @@ public class HubEventProcessor implements Runnable {
 
         payload.getConditions().forEach(cond -> {
             Integer value = null;
-
             Object rawValue = cond.getValue();
-            if (rawValue instanceof Integer i) {
-                value = i;
-            } else if (rawValue instanceof Boolean b) {
-                value = b ? 1 : 0;
-            }
+            if (rawValue instanceof Integer i) value = i;
+            else if (rawValue instanceof Boolean b) value = b ? 1 : 0;
 
             Condition condition = conditionRepository.save(Condition.builder()
                     .type(cond.getType().name())
@@ -130,15 +143,16 @@ public class HubEventProcessor implements Runnable {
                     .value(value)
                     .build());
 
-            sensorRepository.findByIdAndHubId(cond.getSensorId(), hubId).ifPresent(sensor -> {
-                ScenarioCondition sc = ScenarioCondition.builder()
-                        .id(new ScenarioConditionId(scenario.getId(), sensor.getId(), condition.getId()))
-                        .scenario(scenario)
-                        .sensor(sensor)
-                        .condition(condition)
-                        .build();
-                scenario.getConditions().add(sc);
-            });
+            sensorRepository.findByIdAndHubId(cond.getSensorId(), hubId)
+                    .ifPresent(sensor -> {
+                        ScenarioCondition sc = ScenarioCondition.builder()
+                                .id(new ScenarioConditionId(scenario.getId(), sensor.getId(), condition.getId()))
+                                .scenario(scenario)
+                                .sensor(sensor)
+                                .condition(condition)
+                                .build();
+                        scenario.getConditions().add(sc);
+                    });
         });
 
         payload.getActions().forEach(act -> {
@@ -147,15 +161,16 @@ public class HubEventProcessor implements Runnable {
                     .value(act.getValue() != null ? act.getValue() : null)
                     .build());
 
-            sensorRepository.findByIdAndHubId(act.getSensorId(), hubId).ifPresent(sensor -> {
-                ScenarioAction sa = ScenarioAction.builder()
-                        .id(new ScenarioActionId(scenario.getId(), sensor.getId(), action.getId()))
-                        .scenario(scenario)
-                        .sensor(sensor)
-                        .action(action)
-                        .build();
-                scenario.getActions().add(sa);
-            });
+            sensorRepository.findByIdAndHubId(act.getSensorId(), hubId)
+                    .ifPresent(sensor -> {
+                        ScenarioAction sa = ScenarioAction.builder()
+                                .id(new ScenarioActionId(scenario.getId(), sensor.getId(), action.getId()))
+                                .scenario(scenario)
+                                .sensor(sensor)
+                                .action(action)
+                                .build();
+                        scenario.getActions().add(sa);
+                    });
         });
 
         scenarioRepository.save(scenario);
@@ -166,12 +181,13 @@ public class HubEventProcessor implements Runnable {
         String hubId = event.getHubId();
         String name = payload.getName();
 
-        scenarioRepository.findByHubIdAndName(hubId, name).ifPresentOrElse(
-                s -> {
-                    scenarioRepository.delete(s);
-                    log.info("Удалён сценарий {} из хаба {}", name, hubId);
-                },
-                () -> log.debug("Сценарий {} для хаба {} не найден", name, hubId)
-        );
+        scenarioRepository.findByHubIdAndName(hubId, name)
+                .ifPresentOrElse(
+                        s -> {
+                            scenarioRepository.delete(s);
+                            log.info("Удалён сценарий {} из хаба {}", name, hubId);
+                        },
+                        () -> log.debug("Сценарий {} для хаба {} не найден", name, hubId)
+                );
     }
 }

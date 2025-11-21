@@ -1,5 +1,6 @@
 package ru.yandex.practicum;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -8,6 +9,7 @@ import ru.yandex.practicum.processor.HubEventProcessor;
 import ru.yandex.practicum.processor.SnapshotProcessor;
 
 @SpringBootApplication
+@Slf4j
 @ConfigurationPropertiesScan
 public class AnalyzerApplication {
     public static void main(String[] args) {
@@ -21,8 +23,9 @@ public class AnalyzerApplication {
         hubEventsThread.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            log.info("Сработал shutdown hook.");
+            hubEventProcessor.shutdown();
             try {
-                hubEventsThread.interrupt();
                 hubEventsThread.join(2000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

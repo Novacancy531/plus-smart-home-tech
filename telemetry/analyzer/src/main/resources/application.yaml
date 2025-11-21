@@ -20,10 +20,19 @@ spring:
       separator: ";"
       encoding: UTF-8
 
-  kafka:
-    bootstrap-servers: localhost:9092
-
-analyzer:
+kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    hub:
+      hub-group-id: aggregator-group
+      auto-offset-reset: earliest
+      auto-commit: false
+      poll-timeout-ms: 200
+    snapshot:
+      snapshot-group-id: analyzer-snapshots-group
+      auto-offset-reset: earliest
+      auto-commit: false
+      poll-timeout-ms: 200
   topics:
     snapshots: telemetry.snapshots.v1
     hub-events: telemetry.hubs.v1
