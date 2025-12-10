@@ -1,15 +1,12 @@
 spring:
   application:
-    name: aggregator
+    name: discovery-server
 
   config:
-    import: "optional:configserver:"
+    import: "configserver:http://localhost:8888"
 
   cloud:
     config:
-      discovery:
-        enabled: true
-        service-id: config-server
       fail-fast: true
       retry:
         useRandomPolicy: true

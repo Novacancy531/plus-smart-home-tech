@@ -11,3 +11,8 @@ collector:
 grpc:
   server:
     port: 9091
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
