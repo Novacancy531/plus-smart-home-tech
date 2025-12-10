@@ -1,8 +1,13 @@
-collector:
-  kafka:
-    topics:
-      sensors: telemetry.sensors.v1
-      hubs: telemetry.hubs.v1
-grpc:
-  server:
-    port: 9090
+spring:
+  application:
+    name: collector
+
+  config:
+    import: "configserver:http://localhost:8888"
+
+  cloud:
+    config:
+      fail-fast: true
+      retry:
+        useRandomPolicy: true
+        max-interval: 6000
