@@ -2,7 +2,7 @@ package ru.yandex.practicum.api.mapper;
 
 import org.mapstruct.*;
 import ru.yandex.practicum.dal.entity.Product;
-import ru.yandex.practicum.model.ProductDto;
+import ru.yandex.practicum.entity.store.ProductDto;
 
 @Mapper(
         componentModel = "spring",

@@ -1,6 +1,5 @@
 package ru.yandex.practicum.api.handler;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,14 +11,13 @@ import java.time.Instant;
 import java.util.Map;
 
 @RestControllerAdvice
-@RequiredArgsConstructor
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ProductNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleProductNotFound(ProductNotFoundException ex) {
         ErrorResponse body = ErrorResponse.builder()
                 .errorCode("PRODUCT_NOT_FOUND")
-                .message("Товар с указанным идентификатором не найден")
+                .message(ex.getMessage())
                 .timestamp(Instant.now())
                 .details(Map.of("productId", ex.getProductId()))
                 .build();

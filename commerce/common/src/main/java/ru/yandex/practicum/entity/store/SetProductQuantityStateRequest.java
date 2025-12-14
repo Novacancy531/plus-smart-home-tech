@@ -1,10 +1,10 @@
-package ru.yandex.practicum.model;
+package ru.yandex.practicum.entity.store;
 
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
-import ru.yandex.practicum.model.enums.QuantityState;
+import ru.yandex.practicum.entity.store.enums.QuantityState;
 
 import java.util.UUID;
 
@@ -12,6 +12,7 @@ import java.util.UUID;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SetProductQuantityStateRequest {
+
     UUID productId;
     QuantityState quantityState;
 }

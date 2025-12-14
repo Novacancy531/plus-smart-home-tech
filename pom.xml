@@ -19,8 +19,6 @@
         <module>telemetry</module>
         <module>infra</module>
         <module>commerce</module>
-        <module>infra/config-server</module>
-        <module>infra/discovery-server</module>
     </modules>
 
     <properties>
@@ -91,6 +89,12 @@
                 <groupId>io.grpc</groupId>
                 <artifactId>grpc-protobuf</artifactId>
                 <version>${grpc.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>1.5.5.Final</version>
             </dependency>
 
             <!--    / GRPC dependencies management        -->

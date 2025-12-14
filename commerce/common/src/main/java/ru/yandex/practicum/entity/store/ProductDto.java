@@ -1,4 +1,4 @@
-package ru.yandex.practicum.model;
+package ru.yandex.practicum.entity.store;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
@@ -6,9 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import ru.yandex.practicum.model.enums.ProductCategory;
-import ru.yandex.practicum.model.enums.ProductState;
-import ru.yandex.practicum.model.enums.QuantityState;
+import ru.yandex.practicum.entity.store.enums.ProductCategory;
+import ru.yandex.practicum.entity.store.enums.ProductState;
+import ru.yandex.practicum.entity.store.enums.QuantityState;
 
 import java.util.UUID;
 

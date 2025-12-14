@@ -9,11 +9,11 @@ import ru.yandex.practicum.api.mapper.ProductMapper;
 import ru.yandex.practicum.dal.entity.Product;
 import ru.yandex.practicum.dal.repository.ShoppingStoreRepository;
 import ru.yandex.practicum.domain.exception.ProductNotFoundException;
-import ru.yandex.practicum.model.ProductDto;
-import ru.yandex.practicum.model.SetProductQuantityStateRequest;
-import ru.yandex.practicum.model.enums.ProductCategory;
-import ru.yandex.practicum.model.enums.ProductState;
-import ru.yandex.practicum.model.enums.QuantityState;
+import ru.yandex.practicum.entity.store.ProductDto;
+import ru.yandex.practicum.entity.store.SetProductQuantityStateRequest;
+import ru.yandex.practicum.entity.store.enums.ProductCategory;
+import ru.yandex.practicum.entity.store.enums.ProductState;
+import ru.yandex.practicum.entity.store.enums.QuantityState;
 
 import java.util.UUID;
 
@@ -33,7 +33,7 @@ public class ShoppingStoreService {
 
     @Transactional(readOnly = true)
     public ProductDto getProduct(UUID productId) {
-        Product product = repository.findById(productId)
+        var product = repository.findById(productId)
                 .orElseThrow(() -> new ProductNotFoundException(productId));
         return productMapper.toDto(product);
     }
@@ -48,7 +48,7 @@ public class ShoppingStoreService {
     }
 
     public ProductDto updateProduct(ProductDto dto) {
-        UUID productId = dto.getProductId();
+        var productId = dto.getProductId();
         if (productId == null) {
             throw new IllegalArgumentException("productId обязателен для обновления товара");
         }
@@ -75,9 +75,9 @@ public class ShoppingStoreService {
     }
 
     public boolean setQuantityState(SetProductQuantityStateRequest request) {
-        UUID productId = request.getProductId();
+        var productId = request.getProductId();
 
-        Product product = repository.findById(request.getProductId())
+        var product = repository.findById(request.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         product.setQuantityState(request.getQuantityState());
