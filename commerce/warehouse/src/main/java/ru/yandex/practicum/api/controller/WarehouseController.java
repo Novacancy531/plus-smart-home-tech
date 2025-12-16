@@ -7,10 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.domain.service.WarehouseService;
 import ru.yandex.practicum.entity.cart.ShoppingCartDto;
-import ru.yandex.practicum.entity.warehouse.AddProductToWarehouseRequest;
-import ru.yandex.practicum.entity.warehouse.AddressDto;
-import ru.yandex.practicum.entity.warehouse.BookedProductsDto;
-import ru.yandex.practicum.entity.warehouse.NewProductInWarehouseRequest;
+import ru.yandex.practicum.entity.warehouse.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,8 +17,8 @@ public class WarehouseController {
     private final WarehouseService service;
 
     @PutMapping()
-    public void newProductInWarehouse(@RequestBody NewProductInWarehouseRequest request) {
-        service.newProductInWarehouse(request);
+    public WarehouseProductDto newProductInWarehouse(@RequestBody NewProductInWarehouseRequest request) {
+        return service.newProductInWarehouse(request);
     }
 
     @PostMapping("/add")
@@ -30,7 +27,7 @@ public class WarehouseController {
     }
 
     @PostMapping("/check")
-    public BookedProductsDto checkAvailability(@RequestBody ShoppingCartDto shoppingCartDto) {
+    public boolean checkAvailability(@RequestBody ShoppingCartDto shoppingCartDto) {
         return service.checkAvailability(shoppingCartDto);
     }
 

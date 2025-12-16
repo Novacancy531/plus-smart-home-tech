@@ -1,0 +1,375 @@
+{
+  "info": {
+    "_postman_id": "dbbb2c08-3e51-4489-8c7d-1e678e835d3a",
+    "name": "Smart Home Tech - Warehouse API (Practicum tests)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1) Get warehouse address",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Body is JSON', function () {",
+              "  pm.response.to.be.json;",
+              "});",
+              "pm.test('Has at least one address field', function () {",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.be.an('object');",
+              "  pm.expect(Object.keys(b).length).to.be.greaterThan(0);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "id": "717221f4-e955-4d6a-9adb-6f17d1e42361"
+          }
+        }
+      ],
+      "id": "b865390a-edab-47bd-bff5-abafacfc84f5",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/warehouse/address",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "warehouse",
+            "address"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2) Register new product in warehouse (PUT /warehouse)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "id": "ffc34216-be4f-4225-837f-fed9b3fa96d9"
+          }
+        }
+      ],
+      "id": "5a5d60d3-ad85-47e7-9473-5697161d90ef",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": \"{{productId1}}\",\n  \"fragile\": true,\n  \"dimension\": {\n    \"width\": 10.0,\n    \"height\": 20.0,\n    \"depth\": 30.0\n  },\n  \"weight\": 1.5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/warehouse",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "warehouse"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "3) Register same product again -> expect 400 (SpecifiedProductAlreadyInWarehouseException)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Error payload is JSON object (exception-like)', function () {",
+              "  pm.response.to.be.json;",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.be.an('object');",
+              "});"
+            ],
+            "type": "text/javascript",
+            "id": "f97c8361-873f-40fa-aba3-cb1a01f216d8"
+          }
+        }
+      ],
+      "id": "aeafe3a5-67b0-4246-be26-79e2be8a3f9a",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": \"{{productId1}}\",\n  \"fragile\": true,\n  \"dimension\": {\n    \"width\": 10.0,\n    \"height\": 20.0,\n    \"depth\": 30.0\n  },\n  \"weight\": 1.5\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/warehouse",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "warehouse"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "4) Add quantity to product (POST /warehouse/add)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Swagger shows only 400 explicitly; many implementations return 200/204 for success.",
+              "pm.test('Status is not 400', function () {",
+              "  pm.expect(pm.response.code).to.not.equal(400);",
+              "});"
+            ],
+            "type": "text/javascript",
+            "id": "bc898aab-9b84-4e1a-a860-603180103710"
+          }
+        }
+      ],
+      "id": "af08a299-e96c-4881-b2b4-e3604fea7aa6",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": \"{{productId1}}\",\n  \"quantity\": {{initialQty}}\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/warehouse/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "warehouse",
+            "add"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "5) Add quantity for unknown product -> expect 400 (NoSpecifiedProductInWarehouseException)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Error payload is JSON object (exception-like)', function () {",
+              "  pm.response.to.be.json;",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.be.an('object');",
+              "});"
+            ],
+            "type": "text/javascript",
+            "id": "c29dbc7f-4db9-4032-91ca-dced202ba8fe"
+          }
+        }
+      ],
+      "id": "ad5d33fa-ea5f-44b1-a883-a4e6a8ef3459",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": \"{{productId2}}\",\n  \"quantity\": {{addQty}}\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/warehouse/add",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "warehouse",
+            "add"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "6) Check cart is enough (POST /warehouse/check) -> expect 200",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "pm.test('BookedProductsDto-like fields exist', function () {",
+              "  pm.response.to.be.json;",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.be.an('object');",
+              "  pm.expect(b).to.have.property('deliveryWeight');",
+              "  pm.expect(b).to.have.property('deliveryVolume');",
+              "  pm.expect(b).to.have.property('fragile');",
+              "});"
+            ],
+            "type": "text/javascript",
+            "id": "71b481b3-d866-4517-ada4-d40e2fee6853"
+          }
+        }
+      ],
+      "id": "91a8167f-f1b9-4de2-ac88-153dd3647f0b",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"shoppingCartId\": \"{{shoppingCartId}}\",\n  \"products\": {\n    \"{{productId1}}\": 1\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/warehouse/check",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "warehouse",
+            "check"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "7) Check cart not enough -> expect 400 (ProductInShoppingCartLowQuantityInWarehouse)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "pm.test('Error payload is JSON object (exception-like)', function () {",
+              "  pm.response.to.be.json;",
+              "  const b = pm.response.json();",
+              "  pm.expect(b).to.be.an('object');",
+              "});"
+            ],
+            "type": "text/javascript",
+            "id": "c4fcc835-5808-41ba-964a-437ff5429871"
+          }
+        }
+      ],
+      "id": "1cee5ca0-3a07-497c-a93a-381864385611",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"shoppingCartId\": \"{{shoppingCartId}}\",\n  \"products\": {\n    \"{{productId1}}\": {{tooMuchQty}}\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/warehouse/check",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "warehouse",
+            "check"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "id": "4cd1076e-3e18-4022-97e8-08ca229efa77",
+      "key": "baseUrl",
+      "value": "http://localhost:38081"
+    },
+    {
+      "id": "706d1f95-d268-4ab4-8fb6-5433888d8259",
+      "key": "productId1",
+      "value": "53aa35c8-e659-44b2-882f-f6056e443c99"
+    },
+    {
+      "id": "95068ef1-f791-4ed4-9c39-aba9f2ed908d",
+      "key": "productId2",
+      "value": "9f2b3c1a-7d8e-4b1a-9c3d-2a1b3c4d5e6f"
+    },
+    {
+      "id": "06c82331-1b72-46ef-aa84-db9289194896",
+      "key": "shoppingCartId",
+      "value": "2c6a0a35-5b63-4b67-9aa6-9e8d1c5c2c7a"
+    },
+    {
+      "id": "f6eb95c0-30fb-47d7-9b02-fe7b21e408c5",
+      "key": "initialQty",
+      "value": "10"
+    },
+    {
+      "id": "e756d26a-91c6-4b40-8d94-c5a5bef934cb",
+      "key": "addQty",
+      "value": "5"
+    },
+    {
+      "id": "40b59cc9-2b92-454d-93b5-0af1cf6208e6",
+      "key": "tooMuchQty",
+      "value": "999"
+    }
+  ]
+}

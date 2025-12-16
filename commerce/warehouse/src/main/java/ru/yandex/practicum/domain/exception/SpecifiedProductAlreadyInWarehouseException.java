@@ -1,8 +1,16 @@
 package ru.yandex.practicum.domain.exception;
 
+import lombok.Getter;
+
+import java.util.Map;
+
+@Getter
 public class SpecifiedProductAlreadyInWarehouseException extends RuntimeException {
 
-    public SpecifiedProductAlreadyInWarehouseException(String message) {
+    private Map<String, Object> details;
+
+    public SpecifiedProductAlreadyInWarehouseException(String message,  Map<String, Object> details) {
         super(message);
+        this.details = details;
     }
 }

@@ -17,8 +17,9 @@ import java.util.UUID;
 public class Dimension {
 
     @Id
-    @Column(name = "product_id", nullable = false, updatable = false)
-    UUID productId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
     @Column(name = "width", nullable = false)
     double width;

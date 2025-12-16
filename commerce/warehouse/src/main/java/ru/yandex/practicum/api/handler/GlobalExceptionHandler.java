@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
                         .errorCode("SPECIFIED_PRODUCT_ALREADY_IN_WAREHOUSE")
                         .message(ex.getMessage())
                         .timestamp(Instant.now())
-                        .details(null)
+                        .details(ex.getDetails())
                         .build()
         );
     }
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
                         .errorCode("NO_SPECIFIED_PRODUCT_IN_WAREHOUSE")
                         .message(ex.getMessage())
                         .timestamp(Instant.now())
-                        .details(null)
+                        .details(ex.getDetails())
                         .build()
         );
     }
@@ -51,7 +51,7 @@ public class GlobalExceptionHandler {
                         .errorCode("PRODUCT_IN_SHOPPING_CART_LOW_QUANTITY_IN_WAREHOUSE")
                         .message(ex.getMessage())
                         .timestamp(Instant.now())
-                        .details(null)
+                        .details(ex.getDetails())
                         .build()
         );
     }

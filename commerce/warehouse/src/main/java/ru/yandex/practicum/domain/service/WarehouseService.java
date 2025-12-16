@@ -4,20 +4,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.api.mapper.DimensionMapper;
+import ru.yandex.practicum.api.mapper.WarehouseProductMapper;
 import ru.yandex.practicum.dal.entity.WarehouseProduct;
 import ru.yandex.practicum.dal.repository.WarehouseRepository;
 import ru.yandex.practicum.domain.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.domain.exception.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.domain.exception.SpecifiedProductAlreadyInWarehouseException;
 import ru.yandex.practicum.entity.cart.ShoppingCartDto;
-import ru.yandex.practicum.entity.warehouse.AddProductToWarehouseRequest;
-import ru.yandex.practicum.entity.warehouse.AddressDto;
-import ru.yandex.practicum.entity.warehouse.BookedProductsDto;
-import ru.yandex.practicum.entity.warehouse.NewProductInWarehouseRequest;
+import ru.yandex.practicum.entity.warehouse.*;
 
 import java.security.SecureRandom;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,20 +25,20 @@ public class WarehouseService {
 
     private final WarehouseRepository repository;
     private final DimensionMapper dimensionMapper;
+    private final WarehouseProductMapper warehouseProductMapper;
 
     private static final String[] ADDRESSES = new String[]{"ADDRESS_1", "ADDRESS_2"};
     private static final String CURRENT_ADDRESS = ADDRESSES[new SecureRandom().nextInt(ADDRESSES.length)];
 
-    public void newProductInWarehouse(NewProductInWarehouseRequest request) {
+    public WarehouseProductDto newProductInWarehouse(NewProductInWarehouseRequest request) {
         UUID productId = request.getProductId();
 
         if (repository.existsById(productId)) {
             throw new SpecifiedProductAlreadyInWarehouseException(
-                    "Ошибка, товар с таким описанием уже зарегистрирован на складе"
-            );
+                    "Ошибка, товар с таким описанием уже зарегистрирован на складе", Map.of("productId", productId));
         }
 
-        var dimension = dimensionMapper.toEntity(request.getDimension(), productId);
+        var dimension = dimensionMapper.toEntity(request.getDimension());
 
         var warehouseProduct = WarehouseProduct.builder()
                 .productId(productId)
@@ -50,13 +49,16 @@ public class WarehouseService {
                 .build();
 
         repository.save(warehouseProduct);
+
+        return warehouseProductMapper.toDto(warehouseProduct);
     }
 
     public void addProductToWarehouse(AddProductToWarehouseRequest request) {
         UUID productId = request.getProductId();
 
         var warehouseProduct = repository.findById(productId)
-                .orElseThrow(() -> new NoSpecifiedProductInWarehouseException("Нет информации о товаре на складе"));
+                .orElseThrow(() -> new NoSpecifiedProductInWarehouseException("Нет информации о товаре на складе",
+                        Map.of("productId", productId)));
 
         warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.getQuantity());
     }
@@ -72,48 +74,38 @@ public class WarehouseService {
     }
 
     @Transactional(readOnly = true)
-    public BookedProductsDto checkAvailability(ShoppingCartDto shoppingCartDto) {
-        double deliveryWeight = 0.0;
-        double deliveryVolume = 0.0;
-        boolean fragile = false;
+    public boolean checkAvailability(ShoppingCartDto shoppingCartDto) {
+        var warehouseProducts = getWarehouseProducts(shoppingCartDto.getProducts().keySet());
+        var outOfStockList = new HashMap<String, Object>();
+        var isAvailable = true;
 
-        for (Map.Entry<UUID, Long> productEntry : shoppingCartDto.getProducts().entrySet()) {
-            UUID productId = productEntry.getKey();
-            long requiredQuantity = productEntry.getValue();
+        for (Map.Entry<UUID, Long> entry : shoppingCartDto.getProducts().entrySet()) {
+            long required = entry.getValue();
+            long available = Optional.ofNullable(warehouseProducts.get(entry.getKey()))
+                    .map(WarehouseProduct::getQuantity)
+                    .orElse(0L);
+            long missing = required - available;
 
-            var warehouseProduct = repository.findById(productId)
-                    .orElseThrow(() -> new ProductInShoppingCartLowQuantityInWarehouse(
-                            "Ошибка, товар из корзины не находится в требуемом количестве на складе"
-                    ));
-
-            long availableQuantity = warehouseProduct.getQuantity();
-            if (availableQuantity < requiredQuantity) {
-                throw new ProductInShoppingCartLowQuantityInWarehouse(
-                        "Ошибка, товар из корзины не находится в требуемом количестве на складе"
-                );
+            if(missing > 0) {
+                isAvailable = false;
+                outOfStockList.put(entry.getKey().toString(), missing);
             }
-
-            deliveryWeight += calculateDeliveryWeight(warehouseProduct.getWeight(), requiredQuantity);
-
-            var dimension = warehouseProduct.getDimension();
-            deliveryVolume += calculateDeliveryVolume(dimension.getWidth(), dimension.getHeight(), dimension.getDepth(),
-                    requiredQuantity);
-
-            fragile = fragile || warehouseProduct.isFragile();
         }
 
-        return BookedProductsDto.builder()
-                .deliveryWeight(deliveryWeight)
-                .deliveryVolume(deliveryVolume)
-                .fragile(fragile)
-                .build();
+        if(!isAvailable) {
+            throw new ProductInShoppingCartLowQuantityInWarehouse("Недостаточно товаров на складе",
+                    outOfStockList);
+        }
+
+        return true;
     }
 
-    private double calculateDeliveryWeight(double weight, long quantity) {
-        return weight * quantity;
-    }
-
-    private double calculateDeliveryVolume(double width, double height, double depth, long quantity) {
-        return (width * height * depth) * quantity;
+    private Map<UUID, WarehouseProduct> getWarehouseProducts(Set<UUID> productIds) {
+        return  repository.findAllByProductIdIn(productIds)
+                .stream()
+                .collect(Collectors.toMap(
+                        WarehouseProduct::getProductId,
+                        Function.identity()
+                ));
     }
 }

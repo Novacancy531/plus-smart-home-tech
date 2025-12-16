@@ -21,9 +21,8 @@ public class WarehouseProduct {
     @Column(name = "fragile", nullable = false)
     private boolean fragile;
 
-    @OneToOne(optional = false, cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @MapsId
-    @JoinColumn(name = "product_id", nullable = false)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "dimension_id", nullable = false)
     private Dimension dimension;
 
     @Column(name = "weight", nullable = false)
@@ -31,8 +30,4 @@ public class WarehouseProduct {
 
     @Column(name = "quantity", nullable = false)
     private long quantity;
-
-    @Version
-    @Column(name = "version", nullable = false)
-    private long version;
 }
