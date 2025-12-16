@@ -2,7 +2,6 @@ package ru.yandex.practicum.domain.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +10,6 @@ import ru.yandex.practicum.dal.entity.Product;
 import ru.yandex.practicum.dal.repository.ShoppingStoreRepository;
 import ru.yandex.practicum.domain.exception.ProductNotFoundException;
 import ru.yandex.practicum.entity.store.ProductDto;
-import ru.yandex.practicum.entity.store.SetProductQuantityStateRequest;
 import ru.yandex.practicum.entity.store.enums.ProductCategory;
 import ru.yandex.practicum.entity.store.enums.ProductState;
 import ru.yandex.practicum.entity.store.enums.QuantityState;
@@ -42,8 +40,6 @@ public class ShoppingStoreService {
     public ProductDto createProduct(ProductDto dto) {
         Product entity = productMapper.toEntity(dto);
 
-        defaultsValues(entity);
-
         Product saved = repository.save(entity);
         return productMapper.toDto(saved);
     }
@@ -59,8 +55,6 @@ public class ShoppingStoreService {
 
         productMapper.updateEntity(existing, dto);
 
-        defaultsValues(existing);
-
         Product saved = repository.save(existing);
         return productMapper.toDto(saved);
     }
@@ -75,21 +69,12 @@ public class ShoppingStoreService {
         return true;
     }
 
-    public boolean setQuantityState(SetProductQuantityStateRequest request) {
-        var product = repository.findById(request.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException(request.getProductId()));
+    public boolean setQuantityState(UUID productId, QuantityState quantityState) {
+        var product = repository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId));
 
-        product.setQuantityState(request.getQuantityState());
+        product.setQuantityState(quantityState);
 
         return true;
-    }
-
-    private void defaultsValues(Product product) {
-        if (product.getProductState() == null) {
-            product.setProductState(ProductState.ACTIVE);
-        }
-        if (product.getQuantityState() == null) {
-            product.setQuantityState(QuantityState.ENDED);
-        }
     }
 }

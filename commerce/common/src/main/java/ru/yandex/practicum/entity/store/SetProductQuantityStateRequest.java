@@ -1,6 +1,5 @@
 package ru.yandex.practicum.entity.store;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,8 +13,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class SetProductQuantityStateRequest {
 
-    @NotNull
     UUID productId;
-    @NotNull
     QuantityState quantityState;
 }
