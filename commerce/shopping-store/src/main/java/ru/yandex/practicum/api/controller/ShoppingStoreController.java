@@ -2,26 +2,27 @@ package ru.yandex.practicum.api.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.api.ShoppingStoreApi;
 import ru.yandex.practicum.domain.service.ShoppingStoreService;
 import ru.yandex.practicum.entity.store.ProductDto;
 import ru.yandex.practicum.entity.store.SetProductQuantityStateRequest;
 import ru.yandex.practicum.entity.store.enums.ProductCategory;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/shopping-store")
 @RequiredArgsConstructor
-public class ShoppingStoreController {
+public class ShoppingStoreController implements ShoppingStoreApi {
 
     private final ShoppingStoreService service;
 
     @GetMapping
-    public Page<ProductDto> getProducts(@RequestParam ProductCategory category, Pageable pageable) {
-        return service.getProducts(category, pageable);
+    public List<ProductDto> getProducts(@RequestParam ProductCategory category, @RequestParam int page,
+                                        @RequestParam int size) {
+        return service.getProducts(category, page, size);
     }
 
     @PutMapping

@@ -74,10 +74,9 @@ public class WarehouseService {
     }
 
     @Transactional(readOnly = true)
-    public boolean checkAvailability(ShoppingCartDto shoppingCartDto) {
+    public void checkAvailability(ShoppingCartDto shoppingCartDto) {
         var warehouseProducts = getWarehouseProducts(shoppingCartDto.getProducts().keySet());
         var outOfStockList = new HashMap<String, Object>();
-        var isAvailable = true;
 
         for (Map.Entry<UUID, Long> entry : shoppingCartDto.getProducts().entrySet()) {
             long required = entry.getValue();
@@ -87,17 +86,14 @@ public class WarehouseService {
             long missing = required - available;
 
             if(missing > 0) {
-                isAvailable = false;
                 outOfStockList.put(entry.getKey().toString(), missing);
             }
         }
 
-        if(!isAvailable) {
+        if(!outOfStockList.isEmpty()) {
             throw new ProductInShoppingCartLowQuantityInWarehouse("Недостаточно товаров на складе",
                     outOfStockList);
         }
-
-        return true;
     }
 
     private Map<UUID, WarehouseProduct> getWarehouseProducts(Set<UUID> productIds) {

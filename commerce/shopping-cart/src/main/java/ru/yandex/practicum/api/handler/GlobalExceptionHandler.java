@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.domain.exception.CartIsDeactivatedException;
 import ru.yandex.practicum.domain.exception.NoProductsInShoppingCartException;
 import ru.yandex.practicum.domain.exception.NotAuthorizedUserException;
-import ru.yandex.practicum.exception.ErrorResponse;
+import ru.yandex.practicum.entity.ErrorResponse;
 
 import java.time.Instant;
 import java.util.Map;

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.domain.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.domain.exception.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.domain.exception.SpecifiedProductAlreadyInWarehouseException;
-import ru.yandex.practicum.exception.ErrorResponse;
+import ru.yandex.practicum.entity.ErrorResponse;
 
 import java.time.Instant;
 

@@ -5,7 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.domain.exception.ProductNotFoundException;
-import ru.yandex.practicum.exception.ErrorResponse;
+import ru.yandex.practicum.entity.ErrorResponse;
 
 import java.time.Instant;
 import java.util.Map;

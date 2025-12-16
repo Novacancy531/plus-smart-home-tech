@@ -1,10 +1,8 @@
 package ru.yandex.practicum.api.controller;
 
-import jakarta.ws.rs.HttpMethod;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.api.WarehouseApi;
 import ru.yandex.practicum.domain.service.WarehouseService;
 import ru.yandex.practicum.entity.cart.ShoppingCartDto;
 import ru.yandex.practicum.entity.warehouse.*;
@@ -12,7 +10,7 @@ import ru.yandex.practicum.entity.warehouse.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/warehouse")
-public class WarehouseController {
+public class WarehouseController implements WarehouseApi {
 
     private final WarehouseService service;
 
@@ -27,8 +25,8 @@ public class WarehouseController {
     }
 
     @PostMapping("/check")
-    public boolean checkAvailability(@RequestBody ShoppingCartDto shoppingCartDto) {
-        return service.checkAvailability(shoppingCartDto);
+    public void checkAvailability(@RequestBody ShoppingCartDto shoppingCartDto) {
+        service.checkAvailability(shoppingCartDto);
     }
 
     @GetMapping("/address")

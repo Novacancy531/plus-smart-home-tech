@@ -1,8 +1,7 @@
 package ru.yandex.practicum.domain.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.api.mapper.ProductMapper;
@@ -15,6 +14,7 @@ import ru.yandex.practicum.entity.store.enums.ProductCategory;
 import ru.yandex.practicum.entity.store.enums.ProductState;
 import ru.yandex.practicum.entity.store.enums.QuantityState;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -26,9 +26,10 @@ public class ShoppingStoreService {
     private final ProductMapper productMapper;
 
     @Transactional(readOnly = true)
-    public Page<ProductDto> getProducts(ProductCategory category, Pageable pageable) {
-        Page<Product> page = repository.findAllByProductCategory(category, pageable);
-        return page.map(productMapper::toDto);
+    public List<ProductDto> getProducts(ProductCategory category, int page, int size) {
+        return repository.findAllByProductCategory(category, PageRequest.of(page, size))
+                .map(productMapper::toDto)
+                .getContent();
     }
 
     @Transactional(readOnly = true)

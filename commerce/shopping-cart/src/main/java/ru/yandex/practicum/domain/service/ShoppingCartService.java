@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.api.mapper.ShoppingCartMapper;
+import ru.yandex.practicum.client.WarehouseClient;
 import ru.yandex.practicum.dal.entity.ShoppingCart;
 import ru.yandex.practicum.dal.repository.ShoppingCartRepository;
 import ru.yandex.practicum.domain.exception.CartIsDeactivatedException;
@@ -20,6 +21,7 @@ import java.util.*;
 public class ShoppingCartService {
 
     private final ShoppingCartRepository repository;
+    private final WarehouseClient warehouseClient;
     private final ShoppingCartMapper mapper;
 
     @Transactional(readOnly = true)
@@ -45,7 +47,10 @@ public class ShoppingCartService {
             });
         }
 
-        return mapper.toDto(cart);
+        var cartDto = mapper.toDto(cart);
+        warehouseClient.checkAvailability(cartDto);
+
+        return cartDto;
     }
 
     public void deactivateCart(String username) {
