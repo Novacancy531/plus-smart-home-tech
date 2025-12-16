@@ -2,6 +2,7 @@ package ru.yandex.practicum.api.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.api.ShoppingStoreApi;
 import ru.yandex.practicum.domain.service.ShoppingStoreService;
@@ -20,8 +21,9 @@ public class ShoppingStoreController implements ShoppingStoreApi {
     private final ShoppingStoreService service;
 
     @GetMapping
-    public List<ProductDto> getProducts(@RequestParam ProductCategory category, @RequestParam int page,
-                                        @RequestParam int size) {
+    public Page<ProductDto> getProducts(@RequestParam ProductCategory category,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "10") int size) {
         return service.getProducts(category, page, size);
     }
 
@@ -46,7 +48,7 @@ public class ShoppingStoreController implements ShoppingStoreApi {
     }
 
     @PostMapping("/quantityState")
-    public boolean setProductQuantityState(@RequestBody SetProductQuantityStateRequest request) {
+    public ProductDto setProductQuantityState(@RequestBody @Valid SetProductQuantityStateRequest request) {
         return service.setQuantityState(request);
     }
 }

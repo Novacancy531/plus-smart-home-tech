@@ -1,6 +1,7 @@
 package ru.yandex.practicum.domain.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +27,9 @@ public class ShoppingStoreService {
     private final ProductMapper productMapper;
 
     @Transactional(readOnly = true)
-    public List<ProductDto> getProducts(ProductCategory category, int page, int size) {
+    public Page<ProductDto> getProducts(ProductCategory category, int page, int size) {
         return repository.findAllByProductCategory(category, PageRequest.of(page, size))
-                .map(productMapper::toDto)
-                .getContent();
+                .map(productMapper::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -75,16 +75,14 @@ public class ShoppingStoreService {
         return true;
     }
 
-    public boolean setQuantityState(SetProductQuantityStateRequest request) {
-        var productId = request.getProductId();
-
+    public ProductDto setQuantityState(SetProductQuantityStateRequest request) {
         var product = repository.findById(request.getProductId())
-                .orElseThrow(() -> new ProductNotFoundException(productId));
+                .orElseThrow(() -> new ProductNotFoundException(request.getProductId()));
 
         product.setQuantityState(request.getQuantityState());
 
-        repository.save(product);
-        return true;
+        var saved = repository.save(product);
+        return productMapper.toDto(saved);
     }
 
     private void defaultsValues(Product product) {
