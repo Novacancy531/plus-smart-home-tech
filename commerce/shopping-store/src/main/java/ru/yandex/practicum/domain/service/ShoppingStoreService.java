@@ -3,6 +3,7 @@ package ru.yandex.practicum.domain.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.api.mapper.ProductMapper;
@@ -15,7 +16,6 @@ import ru.yandex.practicum.entity.store.enums.ProductCategory;
 import ru.yandex.practicum.entity.store.enums.ProductState;
 import ru.yandex.practicum.entity.store.enums.QuantityState;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -27,8 +27,8 @@ public class ShoppingStoreService {
     private final ProductMapper productMapper;
 
     @Transactional(readOnly = true)
-    public Page<ProductDto> getProducts(ProductCategory category, int page, int size) {
-        return repository.findAllByProductCategory(category, PageRequest.of(page, size))
+    public Page<ProductDto> getProducts(ProductCategory category, Pageable pageable) {
+        return repository.findAllByProductCategory(category, pageable)
                 .map(productMapper::toDto);
     }
 
@@ -75,14 +75,13 @@ public class ShoppingStoreService {
         return true;
     }
 
-    public ProductDto setQuantityState(SetProductQuantityStateRequest request) {
+    public boolean setQuantityState(SetProductQuantityStateRequest request) {
         var product = repository.findById(request.getProductId())
                 .orElseThrow(() -> new ProductNotFoundException(request.getProductId()));
 
         product.setQuantityState(request.getQuantityState());
 
-        var saved = repository.save(product);
-        return productMapper.toDto(saved);
+        return true;
     }
 
     private void defaultsValues(Product product) {

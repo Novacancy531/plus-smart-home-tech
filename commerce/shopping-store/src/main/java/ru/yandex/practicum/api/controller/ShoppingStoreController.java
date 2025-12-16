@@ -3,6 +3,9 @@ package ru.yandex.practicum.api.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.api.ShoppingStoreApi;
 import ru.yandex.practicum.domain.service.ShoppingStoreService;
@@ -10,7 +13,6 @@ import ru.yandex.practicum.entity.store.ProductDto;
 import ru.yandex.practicum.entity.store.SetProductQuantityStateRequest;
 import ru.yandex.practicum.entity.store.enums.ProductCategory;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -21,10 +23,8 @@ public class ShoppingStoreController implements ShoppingStoreApi {
     private final ShoppingStoreService service;
 
     @GetMapping
-    public Page<ProductDto> getProducts(@RequestParam ProductCategory category,
-                                        @RequestParam(defaultValue = "0") int page,
-                                        @RequestParam(defaultValue = "10") int size) {
-        return service.getProducts(category, page, size);
+    public Page<ProductDto> getProducts(@RequestParam ProductCategory category, Pageable pageable) {
+        return service.getProducts(category, pageable);
     }
 
     @PutMapping
@@ -48,7 +48,7 @@ public class ShoppingStoreController implements ShoppingStoreApi {
     }
 
     @PostMapping("/quantityState")
-    public ProductDto setProductQuantityState(@RequestBody @Valid SetProductQuantityStateRequest request) {
+    public boolean setProductQuantityState(@RequestBody @Valid SetProductQuantityStateRequest request) {
         return service.setQuantityState(request);
     }
 }
