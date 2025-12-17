@@ -1,7 +1,6 @@
 package ru.yandex.practicum.api.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -39,18 +38,17 @@ public class ShoppingStoreController implements ShoppingStoreApi {
     }
 
     @GetMapping("/{productId}")
-    public ProductDto getProduct(@PathVariable @NotNull(message = "Заполните UUID продукта.") UUID productId) {
+    public ProductDto getProduct(@PathVariable UUID productId) {
         return service.getProduct(productId);
     }
 
     @PostMapping("/removeProductFromStore")
-    public boolean removeProduct(@RequestBody @NotNull(message = "Заполните UUID продукта.") UUID productId) {
+    public boolean removeProduct(@RequestBody UUID productId) {
         return service.removeProduct(productId);
     }
 
     @PostMapping("/quantityState")
-    public boolean setProductQuantityState(@RequestParam @NotNull(message = "Заполните UUID продукта.") UUID productId,
-                                           QuantityState quantityState) {
+    public boolean setProductQuantityState(@RequestParam UUID productId, QuantityState quantityState) {
         return service.setQuantityState(productId, quantityState);
     }
 }

@@ -1,6 +1,7 @@
 package ru.yandex.practicum.api;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +26,11 @@ public interface ShoppingStoreApi {
     ProductDto updateProduct(@RequestBody @Valid ProductDto dto);
 
     @GetMapping(PATH + "/{productId}")
-    ProductDto getProduct(@PathVariable UUID productId);
+    ProductDto getProduct(@PathVariable @NotNull(message = "Заполните UUID продукта.") UUID productId);
 
     @PostMapping(PATH + "/removeProductFromStore")
-    boolean removeProduct(@RequestBody UUID productId);
+    boolean removeProduct(@RequestBody @NotNull(message = "Заполните UUID продукта.") UUID productId);
 
     @PostMapping(PATH + "/quantityState")
-    boolean setProductQuantityState(@RequestParam UUID productId, @RequestParam QuantityState quantityState);
+    boolean setProductQuantityState(@RequestParam @NotNull(message = "Заполните UUID продукта.") UUID productId, @RequestParam QuantityState quantityState);
 }

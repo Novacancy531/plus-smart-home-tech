@@ -1,7 +1,6 @@
 package ru.yandex.practicum.api.controller;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,24 +22,22 @@ public class ShoppingCartController implements ShoppingCartApi {
     private final ShoppingCartService service;
 
     @GetMapping
-    public ShoppingCartDto get(@RequestParam @NotBlank(message = "Заполните имя") String username) {
+    public ShoppingCartDto get(@RequestParam String username) {
         return service.getShoppingCart(username);
     }
 
     @PutMapping
-    public ShoppingCartDto add(@RequestParam @NotBlank(message = "Заполните имя") String username,
-                               @RequestBody Map<UUID, Long> body) {
+    public ShoppingCartDto add(@RequestParam String username, @RequestBody Map<UUID, Long> body) {
         return service.addProducts(username, body);
     }
 
     @DeleteMapping
-    public void deactivate(@RequestParam @NotBlank(message = "Заполните имя") String username) {
+    public void deactivate(@RequestParam String username) {
         service.deactivateCart(username);
     }
 
     @PostMapping("/remove")
-    public ShoppingCartDto remove(@RequestParam @NotBlank(message = "Заполните имя") String username,
-                                  @RequestBody List<UUID> productIds) {
+    public ShoppingCartDto remove(@RequestParam String username, @RequestBody List<UUID> productIds) {
         return service.removeProducts(username, productIds);
     }
 
