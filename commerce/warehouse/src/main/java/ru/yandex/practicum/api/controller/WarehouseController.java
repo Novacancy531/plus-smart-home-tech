@@ -1,6 +1,5 @@
 package ru.yandex.practicum.api.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.api.WarehouseApi;
@@ -16,17 +15,17 @@ public class WarehouseController implements WarehouseApi {
     private final WarehouseService service;
 
     @PutMapping()
-    public WarehouseProductDto newProductInWarehouse(@RequestBody @Valid NewProductInWarehouseRequest request) {
+    public WarehouseProductDto newProductInWarehouse(@RequestBody NewProductInWarehouseRequest request) {
         return service.newProductInWarehouse(request);
     }
 
     @PostMapping("/add")
-    public void addProductToWarehouse(@RequestBody @Valid AddProductToWarehouseRequest request) {
+    public void addProductToWarehouse(@RequestBody AddProductToWarehouseRequest request) {
         service.addProductToWarehouse(request);
     }
 
     @PostMapping("/check")
-    public void checkAvailability(@RequestBody @Valid ShoppingCartDto shoppingCartDto) {
+    public void checkAvailability(@RequestBody ShoppingCartDto shoppingCartDto) {
         service.checkAvailability(shoppingCartDto);
     }
 
