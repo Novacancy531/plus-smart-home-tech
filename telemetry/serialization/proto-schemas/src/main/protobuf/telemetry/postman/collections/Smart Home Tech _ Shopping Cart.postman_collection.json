@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "dbe1e496-4585-49a8-b1a6-97de1f976660",
+    "name": "Smart Home Tech – Shopping Cart",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET Shopping Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.test(\"shoppingCartId exists\", () => {",
+              "  pm.expect(json.shoppingCartId).to.match(/^[0-9a-fA-F-]{36}$/);",
+              "});",
+              "",
+              "pm.test(\"products is object\", () => {",
+              "  pm.expect(typeof json.products).to.eql(\"object\");",
+              "});",
+              "",
+              "pm.environment.set(\"shoppingCartId\", json.shoppingCartId);"
+            ],
+            "type": "text/javascript",
+            "id": "2fcd9535-a7d1-49da-b9e6-672267260309"
+          }
+        }
+      ],
+      "id": "e8600734-6181-40bb-be63-1905c54443fe",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/shopping-cart?username={{username}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "shopping-cart"
+          ],
+          "query": [
+            {
+              "key": "username",
+              "value": "{{username}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "PUT Add Products",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "",
+              "pm.expect(json.products).to.have.property(pm.environment.get(\"productId1\"));",
+              "pm.expect(json.products).to.have.property(pm.environment.get(\"productId2\"));",
+              "",
+              "pm.environment.set(\"shoppingCartId\", json.shoppingCartId);"
+            ],
+            "type": "text/javascript",
+            "id": "ba2f2618-7932-4c09-8f23-5a7385af09c5"
+          }
+        }
+      ],
+      "id": "a36fafdb-4756-4b44-9cb1-61789b12e013",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"{{productId1}}\": 2,\n  \"{{productId2}}\": 1\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/shopping-cart?username={{username}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "shopping-cart"
+          ],
+          "query": [
+            {
+              "key": "username",
+              "value": "{{username}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Change Quantity",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "const pid = pm.environment.get(\"productId1\");",
+              "",
+              "pm.expect(Number(json.products[pid])).to.eql(7);"
+            ],
+            "type": "text/javascript",
+            "id": "08682ab5-dac7-4657-8454-74dafdfebba8"
+          }
+        }
+      ],
+      "id": "f2813aca-4bcd-4cd0-b7f2-f8be522655a9",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"productId\": \"{{productId1}}\",\n  \"newQuantity\": 7\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/shopping-cart/change-quantity?username={{username}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "shopping-cart",
+            "change-quantity"
+          ],
+          "query": [
+            {
+              "key": "username",
+              "value": "{{username}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "POST Remove Product",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));",
+              "",
+              "const json = pm.response.json();",
+              "pm.expect(json.products).to.not.have.property(pm.environment.get(\"productId2\"));"
+            ],
+            "type": "text/javascript",
+            "id": "1f9c84f1-8eea-4af9-a42e-ce4280c5b3ab"
+          }
+        }
+      ],
+      "id": "28029a3d-8100-4594-bbb6-22b1b7af4d48",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\"{{productId2}}\"]"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/shopping-cart/remove?username={{username}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "shopping-cart",
+            "remove"
+          ],
+          "query": [
+            {
+              "key": "username",
+              "value": "{{username}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "DELETE Deactivate Cart",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status 200\", () => pm.response.to.have.status(200));"
+            ],
+            "type": "text/javascript",
+            "id": "fa894287-8e2f-4f36-a85a-ce476c903aa4"
+          }
+        }
+      ],
+      "id": "3d31f722-7062-4547-af6b-da778d9e9861",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/shopping-cart?username={{username}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "shopping-cart"
+          ],
+          "query": [
+            {
+              "key": "username",
+              "value": "{{username}}"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
