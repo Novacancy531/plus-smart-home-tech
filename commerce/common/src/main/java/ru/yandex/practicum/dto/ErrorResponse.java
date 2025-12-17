@@ -1,4 +1,4 @@
-package ru.yandex.practicum.entity;
+package ru.yandex.practicum.dto;
 
 import lombok.Builder;
 import lombok.Value;

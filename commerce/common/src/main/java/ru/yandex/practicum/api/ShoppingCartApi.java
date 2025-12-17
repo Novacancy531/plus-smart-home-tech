@@ -1,8 +1,8 @@
 package ru.yandex.practicum.api;
 
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.entity.cart.ChangeProductQuantityRequest;
-import ru.yandex.practicum.entity.cart.ShoppingCartDto;
+import ru.yandex.practicum.dto.cart.ChangeProductQuantityRequest;
+import ru.yandex.practicum.dto.cart.ShoppingCartDto;
 
 import java.util.List;
 import java.util.Map;

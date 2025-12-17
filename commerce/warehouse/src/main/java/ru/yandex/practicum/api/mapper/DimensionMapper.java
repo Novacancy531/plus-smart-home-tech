@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import ru.yandex.practicum.dal.entity.Dimension;
-import ru.yandex.practicum.entity.warehouse.DimensionDto;
+import ru.yandex.practicum.dto.warehouse.DimensionDto;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.ERROR)
 public interface DimensionMapper {

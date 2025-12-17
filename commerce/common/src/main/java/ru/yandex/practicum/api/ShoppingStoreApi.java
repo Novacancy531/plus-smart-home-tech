@@ -4,10 +4,9 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.entity.store.ProductDto;
-import ru.yandex.practicum.entity.store.SetProductQuantityStateRequest;
-import ru.yandex.practicum.entity.store.enums.ProductCategory;
-import ru.yandex.practicum.entity.store.enums.QuantityState;
+import ru.yandex.practicum.dto.store.ProductDto;
+import ru.yandex.practicum.dto.store.enums.ProductCategory;
+import ru.yandex.practicum.dto.store.enums.QuantityState;
 
 
 import java.util.UUID;

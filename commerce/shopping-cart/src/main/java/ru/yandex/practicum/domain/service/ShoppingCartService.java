@@ -10,8 +10,8 @@ import ru.yandex.practicum.dal.repository.ShoppingCartRepository;
 import ru.yandex.practicum.domain.exception.CartIsDeactivatedException;
 import ru.yandex.practicum.domain.exception.NoProductsInShoppingCartException;
 import ru.yandex.practicum.domain.exception.NotAuthorizedUserException;
-import ru.yandex.practicum.entity.cart.ChangeProductQuantityRequest;
-import ru.yandex.practicum.entity.cart.ShoppingCartDto;
+import ru.yandex.practicum.dto.cart.ChangeProductQuantityRequest;
+import ru.yandex.practicum.dto.cart.ShoppingCartDto;
 
 import java.util.*;
 

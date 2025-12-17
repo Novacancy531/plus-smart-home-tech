@@ -1,22 +1,22 @@
 package ru.yandex.practicum.api.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.api.ShoppingStoreApi;
 import ru.yandex.practicum.domain.service.ShoppingStoreService;
-import ru.yandex.practicum.entity.store.ProductDto;
-import ru.yandex.practicum.entity.store.SetProductQuantityStateRequest;
-import ru.yandex.practicum.entity.store.enums.ProductCategory;
-import ru.yandex.practicum.entity.store.enums.QuantityState;
+import ru.yandex.practicum.dto.store.ProductDto;
+import ru.yandex.practicum.dto.store.enums.ProductCategory;
+import ru.yandex.practicum.dto.store.enums.QuantityState;
 
 import java.util.UUID;
 
 @RestController
+@Validated
 @RequestMapping("/api/v1/shopping-store")
 @RequiredArgsConstructor
 public class ShoppingStoreController implements ShoppingStoreApi {
@@ -39,17 +39,18 @@ public class ShoppingStoreController implements ShoppingStoreApi {
     }
 
     @GetMapping("/{productId}")
-    public ProductDto getProduct(@PathVariable UUID productId) {
+    public ProductDto getProduct(@PathVariable @NotNull(message = "Заполните UUID продукта.") UUID productId) {
         return service.getProduct(productId);
     }
 
     @PostMapping("/removeProductFromStore")
-    public boolean removeProduct(@RequestBody UUID productId) {
+    public boolean removeProduct(@RequestBody @NotNull(message = "Заполните UUID продукта.") UUID productId) {
         return service.removeProduct(productId);
     }
 
     @PostMapping("/quantityState")
-    public boolean setProductQuantityState(@RequestParam UUID productId, @RequestParam QuantityState quantityState) {
+    public boolean setProductQuantityState(@RequestParam @NotNull(message = "Заполните UUID продукта.") UUID productId,
+                                           QuantityState quantityState) {
         return service.setQuantityState(productId, quantityState);
     }
 }

@@ -4,7 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.ReportingPolicy;
 import ru.yandex.practicum.dal.entity.WarehouseProduct;
-import ru.yandex.practicum.entity.warehouse.WarehouseProductDto;
+import ru.yandex.practicum.dto.warehouse.WarehouseProductDto;
 
 @Mapper(
         componentModel = "spring",

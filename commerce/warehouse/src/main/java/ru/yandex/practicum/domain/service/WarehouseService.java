@@ -10,8 +10,8 @@ import ru.yandex.practicum.dal.repository.WarehouseRepository;
 import ru.yandex.practicum.domain.exception.NoSpecifiedProductInWarehouseException;
 import ru.yandex.practicum.domain.exception.ProductInShoppingCartLowQuantityInWarehouse;
 import ru.yandex.practicum.domain.exception.SpecifiedProductAlreadyInWarehouseException;
-import ru.yandex.practicum.entity.cart.ShoppingCartDto;
-import ru.yandex.practicum.entity.warehouse.*;
+import ru.yandex.practicum.dto.cart.ShoppingCartDto;
+import ru.yandex.practicum.dto.warehouse.*;
 
 import java.security.SecureRandom;
 import java.util.*;

@@ -3,11 +3,11 @@ CREATE SCHEMA IF NOT EXISTS store;
 CREATE TABLE IF NOT EXISTS store.product
 (
     product_id       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    product_name     VARCHAR          NOT NULL,
-    product_description      VARCHAR          NOT NULL,
+    product_name     VARCHAR        NOT NULL,
+    description      VARCHAR        NOT NULL,
     image_src        VARCHAR,
-    quantity_state   VARCHAR          NOT NULL,
-    product_state    VARCHAR          NOT NULL,
+    quantity_state   VARCHAR        NOT NULL,
+    product_state    VARCHAR        NOT NULL,
     product_category VARCHAR,
-    price            DOUBLE PRECISION NOT NULL
+    price            NUMERIC(19, 2) NOT NULL
 );

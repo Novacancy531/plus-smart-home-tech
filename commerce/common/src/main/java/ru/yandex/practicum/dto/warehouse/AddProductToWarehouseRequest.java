@@ -1,5 +1,6 @@
-package ru.yandex.practicum.entity.warehouse;
+package ru.yandex.practicum.dto.warehouse;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -12,6 +13,9 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AddProductToWarehouseRequest {
 
+    @NotNull(message = "Заполните UUID продукта.")
     UUID productId;
+
+    @NotNull(message = "Заполните количество продукта.")
     long quantity;
 }

@@ -3,10 +3,11 @@ package ru.yandex.practicum.dal.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import ru.yandex.practicum.entity.store.enums.ProductCategory;
-import ru.yandex.practicum.entity.store.enums.ProductState;
-import ru.yandex.practicum.entity.store.enums.QuantityState;
+import ru.yandex.practicum.dto.store.enums.ProductCategory;
+import ru.yandex.practicum.dto.store.enums.ProductState;
+import ru.yandex.practicum.dto.store.enums.QuantityState;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
@@ -26,8 +27,8 @@ public class Product {
     @Column(name = "product_name", nullable = false)
     String productName;
 
-    @Column(name = "product_description", nullable = false)
-    String productDescription;
+    @Column(name = "description", nullable = false)
+    String description;
 
     @Column(name = "image_src")
     String imageSrc;
@@ -44,6 +45,6 @@ public class Product {
     @Enumerated(EnumType.STRING)
     ProductCategory productCategory;
 
-    @Column(name = "price", nullable = false)
-    Double price;
+    @Column(name = "price", nullable = false, precision = 19, scale = 2)
+    BigDecimal price;
 }

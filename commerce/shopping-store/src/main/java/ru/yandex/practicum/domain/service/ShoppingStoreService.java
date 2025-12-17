@@ -9,10 +9,10 @@ import ru.yandex.practicum.api.mapper.ProductMapper;
 import ru.yandex.practicum.dal.entity.Product;
 import ru.yandex.practicum.dal.repository.ShoppingStoreRepository;
 import ru.yandex.practicum.domain.exception.ProductNotFoundException;
-import ru.yandex.practicum.entity.store.ProductDto;
-import ru.yandex.practicum.entity.store.enums.ProductCategory;
-import ru.yandex.practicum.entity.store.enums.ProductState;
-import ru.yandex.practicum.entity.store.enums.QuantityState;
+import ru.yandex.practicum.dto.store.ProductDto;
+import ru.yandex.practicum.dto.store.enums.ProductCategory;
+import ru.yandex.practicum.dto.store.enums.ProductState;
+import ru.yandex.practicum.dto.store.enums.QuantityState;
 
 import java.util.UUID;
 
@@ -32,16 +32,13 @@ public class ShoppingStoreService {
 
     @Transactional(readOnly = true)
     public ProductDto getProduct(UUID productId) {
-        var product = repository.findById(productId)
-                .orElseThrow(() -> new ProductNotFoundException(productId));
-        return productMapper.toDto(product);
+        return productMapper.toDto(repository.findById(productId)
+                .orElseThrow(() -> new ProductNotFoundException(productId)));
     }
 
     public ProductDto createProduct(ProductDto dto) {
-        Product entity = productMapper.toEntity(dto);
-
-        Product saved = repository.save(entity);
-        return productMapper.toDto(saved);
+        var product = repository.save(productMapper.toEntity(dto));
+        return productMapper.toDto(product);
     }
 
     public ProductDto updateProduct(ProductDto dto) {
@@ -64,8 +61,6 @@ public class ShoppingStoreService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         product.setProductState(ProductState.DEACTIVATE);
-        repository.save(product);
-
         return true;
     }
 
@@ -74,7 +69,6 @@ public class ShoppingStoreService {
                 .orElseThrow(() -> new ProductNotFoundException(productId));
 
         product.setQuantityState(quantityState);
-
         return true;
     }
 }

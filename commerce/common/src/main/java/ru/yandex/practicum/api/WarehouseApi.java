@@ -1,11 +1,11 @@
 package ru.yandex.practicum.api;
 
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.entity.cart.ShoppingCartDto;
-import ru.yandex.practicum.entity.warehouse.AddProductToWarehouseRequest;
-import ru.yandex.practicum.entity.warehouse.AddressDto;
-import ru.yandex.practicum.entity.warehouse.NewProductInWarehouseRequest;
-import ru.yandex.practicum.entity.warehouse.WarehouseProductDto;
+import ru.yandex.practicum.dto.cart.ShoppingCartDto;
+import ru.yandex.practicum.dto.warehouse.AddProductToWarehouseRequest;
+import ru.yandex.practicum.dto.warehouse.AddressDto;
+import ru.yandex.practicum.dto.warehouse.NewProductInWarehouseRequest;
+import ru.yandex.practicum.dto.warehouse.WarehouseProductDto;
 
 public interface WarehouseApi {
 

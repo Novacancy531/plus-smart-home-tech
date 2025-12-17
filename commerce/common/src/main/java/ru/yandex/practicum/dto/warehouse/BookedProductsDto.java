@@ -1,5 +1,6 @@
-package ru.yandex.practicum.entity.warehouse;
+package ru.yandex.practicum.dto.warehouse;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -10,7 +11,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BookedProductsDto {
 
+    @NotNull(message = "Заполните вес доставки.")
     double deliveryWeight;
+
+    @NotNull(message = "Заполните объем доставки.")
     double deliveryVolume;
+
     boolean fragile;
 }
