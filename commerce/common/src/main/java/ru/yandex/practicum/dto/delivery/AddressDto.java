@@ -1,4 +1,4 @@
-package ru.yandex.practicum.dto.warehouse;
+package ru.yandex.practicum.dto.delivery;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;

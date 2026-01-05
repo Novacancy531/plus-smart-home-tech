@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: order
+          uri: lb://ORDER
+          predicates:
+            - Path=/order/**
+          filters:
+            - RewritePath=/order(?<segment>/?.*), /api/v1/order/${segment}
+
+        - id: payment
+          uri: lb://PAYMENT
+          predicates:
+            - Path=/payment/**
+          filters:
+            - RewritePath=/payment(?<segment>/?.*), /api/v1/payment/${segment}
+
+        - id: delivery
+          uri: lb://DELIVERY
+          predicates:
+            - Path=/delivery/**
+          filters:
+            - RewritePath=/delivery(?<segment>/?.*), /api/v1/delivery/${segment}
+
+        - id: warehouse
+          uri: lb://WAREHOUSE
+          predicates:
+            - Path=/warehouse/**
+          filters:
+            - RewritePath=/warehouse(?<segment>/?.*), /api/v1/warehouse/${segment}
+
+        - id: shopping-cart
+          uri: lb://SHOPPING-CART
+          predicates:
+            - Path=/shopping-cart/**
+          filters:
+            - RewritePath=/shopping-cart(?<segment>/?.*), /api/v1/shopping-cart${segment}
+
+        - id: shopping-store
+          uri: lb://SHOPPING-STORE
+          predicates:
+            - Path=/shopping-store/**
+          filters:
+            - RewritePath=/shopping-store(?<segment>/?.*), /api/v1/shopping-store${segment}
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
