@@ -1,6 +1,7 @@
 package ru.yandex.practicum.api.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.api.OrderApi;
 import ru.yandex.practicum.domain.service.OrderService;
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/v1/order")
 public class OrderController implements OrderApi {
 
@@ -19,6 +21,7 @@ public class OrderController implements OrderApi {
 
     @GetMapping
     public List<OrderDto> getClientOrders(@RequestParam String username) {
+        log.info("Пришло имя:" + username);
         return orderService.getClientOrders(username);
     }
 

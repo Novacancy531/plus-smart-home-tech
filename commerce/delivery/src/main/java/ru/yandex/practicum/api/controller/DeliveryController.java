@@ -1,10 +1,7 @@
 package ru.yandex.practicum.api.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.api.DeliveryApi;
 import ru.yandex.practicum.domain.service.DeliveryService;
 import ru.yandex.practicum.dto.delivery.DeliveryDto;
@@ -43,5 +40,10 @@ public class DeliveryController implements DeliveryApi {
     @PostMapping("/cost")
     public BigDecimal deliveryCost(OrderDto order) {
         return deliveryService.deliveryCost(order);
+    }
+
+    @PostMapping("/deliveryUUID")
+    public UUID deliveryUUID(UUID orderId) {
+        return deliveryService.getDeliveryUUID(orderId);
     }
 }

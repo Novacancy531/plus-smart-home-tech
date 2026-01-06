@@ -26,4 +26,7 @@ public interface DeliveryApi {
 
     @PostMapping(PATH + "/cost")
     BigDecimal deliveryCost(@RequestBody @Valid OrderDto order);
+
+    @PostMapping(PATH + "/deliveryUUID")
+    UUID deliveryUUID(@RequestBody UUID orderId);
 }

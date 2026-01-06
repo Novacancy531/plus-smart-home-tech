@@ -18,7 +18,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "orders")
+@Table(name = "orders", schema = "commerce")
 public class Order {
 
     @Id

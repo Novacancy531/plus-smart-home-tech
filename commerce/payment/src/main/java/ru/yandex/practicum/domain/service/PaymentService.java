@@ -1,6 +1,7 @@
 package ru.yandex.practicum.domain.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.api.mapper.PaymentMapper;
@@ -10,8 +11,8 @@ import ru.yandex.practicum.dal.entity.Payment;
 import ru.yandex.practicum.dal.repository.PaymentRepository;
 import ru.yandex.practicum.domain.exception.NoOrderFoundException;
 import ru.yandex.practicum.domain.exception.NotEnoughInfoInOrderToCalculateException;
-import ru.yandex.practicum.dto.order.OrderDto;
 import ru.yandex.practicum.dto.cart.ShoppingCartDto;
+import ru.yandex.practicum.dto.order.OrderDto;
 import ru.yandex.practicum.dto.payment.PaymentDto;
 import ru.yandex.practicum.dto.payment.enums.PaymentStatus;
 import ru.yandex.practicum.dto.store.ProductDto;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentService {
@@ -31,37 +33,64 @@ public class PaymentService {
     private final PaymentMapper paymentMapper;
 
     public BigDecimal calculateProductCost(OrderDto order) {
+        log.info("Calculate product cost started, orderId={}",
+                order != null ? order.getOrderId() : null);
+
         validateOrderForCost(order);
 
         Map<UUID, Long> products = order.getShoppingCartDto().getProducts();
-
         BigDecimal sum = BigDecimal.ZERO;
+
         for (Map.Entry<UUID, Long> e : products.entrySet()) {
             UUID productId = e.getKey();
             long qty = e.getValue() == null ? 0 : e.getValue();
-            if (qty <= 0) continue;
+            if (qty <= 0) {
+                log.debug("Skip product with zero qty, productId={}", productId);
+                continue;
+            }
 
             ProductDto product = shoppingStoreClient.getProduct(productId);
             if (product == null || product.getPrice() == null) {
-                throw new NotEnoughInfoInOrderToCalculateException("Не удалось получить цену товара: " + productId);
+                log.error("Product price not found, productId={}", productId);
+                throw new NotEnoughInfoInOrderToCalculateException(
+                        "Не удалось получить цену товара: " + productId
+                );
             }
 
-            sum = sum.add(product.getPrice().multiply(BigDecimal.valueOf(qty)));
+            BigDecimal cost = product.getPrice().multiply(BigDecimal.valueOf(qty));
+            log.debug("Product cost calculated, productId={}, qty={}, cost={}",
+                    productId, qty, cost);
+
+            sum = sum.add(cost);
         }
+
+        log.info("Product cost calculated, orderId={}, sum={}",
+                order.getOrderId(), sum);
+
         return sum;
     }
 
     public BigDecimal calculateTotalCost(OrderDto order) {
+        log.info("Calculate total cost started, orderId={}",
+                order != null ? order.getOrderId() : null);
+
         validateOrderForCost(order);
 
         BigDecimal productCost = calculateProductCost(order);
         BigDecimal delivery = nullOrZero(order.getDeliveryPrice());
+        BigDecimal total = calculator.totalCost(productCost, delivery);
 
-        return calculator.totalCost(productCost, delivery);
+        log.info("Total cost calculated, orderId={}, total={}",
+                order.getOrderId(), total);
+
+        return total;
     }
 
     @Transactional
     public PaymentDto createPayment(OrderDto order) {
+        log.info("Create payment started, orderId={}",
+                order != null ? order.getOrderId() : null);
+
         validateOrderForPayment(order);
 
         BigDecimal productCost = calculateProductCost(order);
@@ -79,52 +108,83 @@ public class PaymentService {
         );
 
         Payment saved = paymentRepository.save(payment);
+        PaymentDto result = paymentMapper.toDto(saved);
 
-        return paymentMapper.toDto(saved);
+        log.info("Payment created, paymentId={}, orderId={}, total={}, status={}",
+                saved.getPaymentId(), saved.getOrderId(), saved.getTotalPayment(), saved.getStatus());
+
+        return result;
     }
 
     @Transactional
     public void markSuccess(UUID paymentId) {
+        log.info("Mark payment SUCCESS, paymentId={}", paymentId);
+
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new NoOrderFoundException("Платёж не найден: " + paymentId));
+                .orElseThrow(() -> {
+                    log.error("Payment not found, paymentId={}", paymentId);
+                    return new NoOrderFoundException("Платёж не найден: " + paymentId);
+                });
 
         payment.setStatus(PaymentStatus.SUCCESS);
         paymentRepository.save(payment);
 
+        log.info("Payment marked SUCCESS, orderId={}", payment.getOrderId());
         orderClient.payment(payment.getOrderId());
     }
 
     @Transactional
     public void markFailed(UUID paymentId) {
+        log.warn("Mark payment FAILED, paymentId={}", paymentId);
+
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new NoOrderFoundException("Платёж не найден: " + paymentId));
+                .orElseThrow(() -> {
+                    log.error("Payment not found, paymentId={}", paymentId);
+                    return new NoOrderFoundException("Платёж не найден: " + paymentId);
+                });
 
         payment.setStatus(PaymentStatus.FAILED);
         paymentRepository.save(payment);
 
-       orderClient.paymentFailed(payment.getOrderId());
+        log.info("Payment marked FAILED, orderId={}", payment.getOrderId());
+        orderClient.paymentFailed(payment.getOrderId());
     }
 
     private void validateOrderForCost(OrderDto order) {
+        log.debug("Validate order for cost, order={}", order);
+
         if (order == null || order.getOrderId() == null) {
+            log.error("orderId is null");
             throw new NotEnoughInfoInOrderToCalculateException("orderId обязателен");
         }
 
         ShoppingCartDto cart = order.getShoppingCartDto();
         if (cart == null || cart.getShoppingCartId() == null) {
-            throw new NotEnoughInfoInOrderToCalculateException("shoppingCartDto.shoppingCartId обязателен");
+            log.error("shoppingCartId is null, orderId={}", order.getOrderId());
+            throw new NotEnoughInfoInOrderToCalculateException(
+                    "shoppingCartDto.shoppingCartId обязателен"
+            );
         }
 
         if (cart.getProducts() == null || cart.getProducts().isEmpty()) {
-            throw new NotEnoughInfoInOrderToCalculateException("shoppingCartDto.products обязателен");
+            log.error("products is empty, orderId={}", order.getOrderId());
+            throw new NotEnoughInfoInOrderToCalculateException(
+                    "shoppingCartDto.products обязателен"
+            );
         }
     }
 
     private void validateOrderForPayment(OrderDto order) {
+        log.debug("Validate order for payment, orderId={}",
+                order != null ? order.getOrderId() : null);
+
         validateOrderForCost(order);
 
         if (order.getDeliveryPrice() == null) {
-            throw new NotEnoughInfoInOrderToCalculateException("deliveryPrice обязателен для формирования оплаты");
+            log.error("deliveryPrice is null, orderId={}", order.getOrderId());
+            throw new NotEnoughInfoInOrderToCalculateException(
+                    "deliveryPrice обязателен для формирования оплаты"
+            );
         }
     }
 
