@@ -3,7 +3,10 @@ package ru.yandex.practicum.domain.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import ru.yandex.practicum.api.mapper.PaymentMapper;
 import ru.yandex.practicum.client.OrderClient;
 import ru.yandex.practicum.client.ShoppingStoreClient;
@@ -16,6 +19,7 @@ import ru.yandex.practicum.dto.order.OrderDto;
 import ru.yandex.practicum.dto.payment.PaymentDto;
 import ru.yandex.practicum.dto.payment.enums.PaymentStatus;
 import ru.yandex.practicum.dto.store.ProductDto;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -31,6 +35,7 @@ public class PaymentService {
     private final OrderClient orderClient;
     private final PaymentCalculator calculator;
     private final PaymentMapper paymentMapper;
+    private final PlatformTransactionManager transactionManager;
 
     public BigDecimal calculateProductCost(OrderDto order) {
         log.info("Calculate product cost started, orderId={}",
@@ -86,10 +91,8 @@ public class PaymentService {
         return total;
     }
 
-    @Transactional
     public PaymentDto createPayment(OrderDto order) {
-        log.info("Create payment started, orderId={}",
-                order != null ? order.getOrderId() : null);
+        log.info("Create payment started, orderId={}", order.getOrderId());
 
         validateOrderForPayment(order);
 
@@ -98,22 +101,34 @@ public class PaymentService {
         BigDecimal fee = calculator.vatFromProducts(productCost);
         BigDecimal total = productCost.add(fee).add(delivery);
 
-        Payment payment = paymentMapper.fromCalculated(
-                order.getOrderId(),
-                productCost,
-                delivery,
-                fee,
-                total,
-                PaymentStatus.PENDING
-        );
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        def.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);
 
-        Payment saved = paymentRepository.save(payment);
-        PaymentDto result = paymentMapper.toDto(saved);
+        TransactionStatus tx = transactionManager.getTransaction(def);
+        try {
+            Payment payment = paymentMapper.fromCalculated(
+                    order.getOrderId(),
+                    productCost,
+                    delivery,
+                    fee,
+                    total,
+                    PaymentStatus.PENDING
+            );
 
-        log.info("Payment created, paymentId={}, orderId={}, total={}, status={}",
-                saved.getPaymentId(), saved.getOrderId(), saved.getTotalPayment(), saved.getStatus());
+            Payment saved = paymentRepository.save(payment);
+            transactionManager.commit(tx);
 
-        return result;
+            PaymentDto result = paymentMapper.toDto(saved);
+
+            log.info("Payment created, paymentId={}, orderId={}, total={}, status={}",
+                    saved.getPaymentId(), saved.getOrderId(), saved.getTotalPayment(), saved.getStatus());
+
+            return result;
+        } catch (RuntimeException e) {
+            transactionManager.rollback(tx);
+            log.error("Payment create failed, orderId={}", order.getOrderId(), e);
+            throw e;
+        }
     }
 
     @Transactional
