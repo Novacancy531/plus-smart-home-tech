@@ -18,6 +18,9 @@
         <module>shopping-cart</module>
         <module>warehouse</module>
         <module>common</module>
+        <module>payment</module>
+        <module>order</module>
+        <module>delivery</module>
     </modules>
 
     <properties>
